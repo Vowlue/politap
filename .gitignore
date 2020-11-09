@@ -3,6 +3,10 @@ spring/target
 spring/.mvn
 spring/.vscode
 spring/HELP.md
+spring/.classpath
+spring/.project
+spring/.factorypath
+spring/.settings/
 
 # Compiled class file
 *.class
