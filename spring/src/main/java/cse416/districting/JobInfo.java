@@ -1,5 +1,6 @@
 package cse416.districting;
 
+import cse416.districting.Enums.Compactness;
 import cse416.districting.Enums.Demographic;
 import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
@@ -14,7 +15,7 @@ public class JobInfo {
     private int plans;
     private States state;
     private boolean isLocal;
-    private float compactness;
+    private Compactness compactness;
     private float populationVariance; 
     private JobStatus jobStatus;
     private Demographic[] demographic;
