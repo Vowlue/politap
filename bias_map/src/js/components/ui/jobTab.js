@@ -6,8 +6,8 @@ const servers = ['Local', 'Seawulf']
 const censusCategories = ['White', 'Black or African American', 'American Indian or Alaska Native', 'Asian', 'Native Hawaiian or Other Pacific Islander', 'Other']
 const compactness = ['Not', 'Somewhat', 'Very', 'Extremely']
 
-function BatchTab(props) {
-    const batchInfo = {
+function JobTab(props) {
+    const jobInfo = {
         plans: 5000,
         populationVariance: 1000,
         compactness: 'Somewhat',
@@ -18,33 +18,34 @@ function BatchTab(props) {
     const [compactRef, setCompactRef] = useState(null) 
     const [serverRef, setServerRef] = useState(null)
 
-    const setPlans = (e) => {batchInfo.plans = e.target.value}
-    const setPopulationVariance = (e) => {batchInfo.populationVariance = e.target.value}
+    const setPlans = (e) => {jobInfo.plans = e.target.value}
+    const setPopulationVariance = (e) => {jobInfo.populationVariance = e.target.value}
     const setCompactness = () => {setTimeout(() => {
       let c = compactRef.firstChild.innerHTML
-      batchInfo.compactness = c}, 10)}
+      jobInfo.compactness = c}, 10)}
     const setServer = () => {setTimeout(() => {
       let s = serverRef.firstChild.innerHTML
-      batchInfo.server = s}, 10)}
+      jobInfo.server = s}, 10)}
     const setGroup = (label) => {setTimeout(() => {
-      const index = batchInfo.groups.indexOf(label);
+      const index = jobInfo.groups.indexOf(label);
       if (index > -1) {
-        batchInfo.groups.splice(index, 1);
+        jobInfo.groups.splice(index, 1);
       }
       else {
-        batchInfo.groups.push(label)
+        jobInfo.groups.push(label)
       }}, 10)}
-    const sendBatchJob = () => {
-      props.addBatchToHistory({...batchInfo, id: parseInt(Math.random()*1000)})
+    const sendJob = () => {
+      jobInfo.status = "Started"
+      props.addJobToHistory(jobInfo)
     }
 
     return (
         <Form>
           <Message>
             <Header textAlign='center' as='h2'>
-              Batch Configuration
+              Job Configuration
               <Header.Subheader>
-              Configure your own batch job to run.
+              Configure your own Job job to run.
               </Header.Subheader>
             </Header>
           </Message>
@@ -55,13 +56,13 @@ function BatchTab(props) {
             </Header>
           </Divider>
           <Form.Field>
-            <Input type='number' labelPosition='left' placeholder={batchInfo.plans}>
+            <Input type='number' labelPosition='left' placeholder={jobInfo.plans}>
               <Label color='blue'># of Plans</Label>
               <input min='1' onChange={setPlans.bind(this)}/>
             </Input>
           </Form.Field>
           <Form.Field>
-            <Input type='number' labelPosition='left' placeholder={batchInfo.populationVariance}>
+            <Input type='number' labelPosition='left' placeholder={jobInfo.populationVariance}>
               <Label color='blue'>Population Variance</Label>
               <input min='1' onChange={setPopulationVariance.bind(this)}/>
             </Input>
@@ -69,7 +70,7 @@ function BatchTab(props) {
           <Form.Field inline>
             <Label color='blue' pointing='right' size='large'>Compactness</Label>
             <Ref innerRef={setCompactRef}>
-              <Select onChange={setCompactness} placeholder={batchInfo.compactness} options={generateSelection(compactness)} />
+              <Select onChange={setCompactness} placeholder={jobInfo.compactness} options={generateSelection(compactness)} />
             </Ref>
           </Form.Field>
           <Form.Field>
@@ -77,18 +78,25 @@ function BatchTab(props) {
           </Form.Field>
           {censusCategories.map(category => createCheckbox(category, setGroup))}
           <Form.Field>
-            Run this batch job in the{' '}
+            Run this Job job in the{' '}
             <Ref innerRef={setServerRef}>
-              <Dropdown floating inline options={generateSelection(servers)} onChange={setServer} defaultValue={batchInfo.server} />
+              <Dropdown floating inline options={generateSelection(servers)} onChange={setServer} defaultValue={jobInfo.server} />
             </Ref>
             {' '}server.
           </Form.Field>
           {
-            props.activeState ? <Button onClick={sendBatchJob} color='blue'>Generate Batch</Button>
-            : <Button disabled basic color='blue'>Generate Batch</Button>
+            props.activeState ? 
+            <div>
+              <Button onClick={sendJob} color='blue'>Generate Job
+              </Button>
+              <Label color='blue' basic content={props.jobLabelContent}>
+              </Label>
+            </div>
+            : 
+            <Button disabled basic color='blue'>Generate Job</Button>
           }
         </Form>
     )
 }
 
-export { BatchTab }
+export { JobTab }

@@ -24,16 +24,17 @@ class BiasMap extends Component {
     this.state = {
       position: [38.305,-96.156],
       zoom: 5,
-      hoveredState: 'No state hovered',
+      hoveredState: 'No precinct hovered',
       activeState: null,
-      demographicContent: '',
+      demographicContent: [],
       visibility: {
         state: true,
         district: true,
         precinct: false
       },
-      batchHistory: [],
-      precinct_geojsons: {}
+      jobHistory: [],
+      precinct_geojsons: {},
+      jobLabelContent: "No job has been started yet."
     }
 
     //bindings
@@ -41,27 +42,45 @@ class BiasMap extends Component {
     this.setStateBounds = this.setStateBounds.bind(this)
     this.setActiveState = this.setActiveState.bind(this)
     this.setVisibility = this.setVisibility.bind(this)
-    this.addBatchToHistory = this.addBatchToHistory.bind(this)
-    this.removeBatchFromHistory = this.removeBatchFromHistory.bind(this)
+    this.addJobToHistory = this.addJobToHistory.bind(this)
+    this.removeJobFromHistory = this.removeJobFromHistory.bind(this)
 
     this.stateBounds = []
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
   }
 
-  addBatchToHistory(batchInfo) {
-    batchInfo.state = this.state.activeState
-    this.setState({
-      batchHistory: {
-        ...this.state.batchHistory,
-        [batchInfo.id]: batchInfo
-      }
+  addJobToHistory(jobInfo) {
+    jobInfo.state = this.state.activeState
+    axios.post(`http://localhost:8080/initiateJob`, {
+        plans: jobInfo.plans,
+        populationVariance: jobInfo.populationVariance,
+        compactness: jobInfo.compactness.toUpperCase(),
+        state: jobInfo.state.toUpperCase(),
+        isLocal: jobInfo.server === 'Local',
+        demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
     })
+      .then(res => {
+        jobInfo.id = res.data
+        this.setState({
+          jobLabelContent: `Job #${res.data} has been started.`,
+          jobHistory: {
+            ...this.state.jobHistory,
+            [res.data]: jobInfo
+          }
+        })
+      })
   }
 
-  removeBatchFromHistory(index) {
-    const { [index]: value, ...withoutIndex } = this.state.batchHistory
+  removeJobFromHistory(index) {
+    axios.post(`http://localhost:8080/deleteJob`, {
+        ID: index
+    })
+      .then(res => {
+        console.log(res.data)
+      })
+    const { [index]: value, ...withoutIndex } = this.state.jobHistory
     this.setState({
-      batchHistory: withoutIndex
+      jobHistory: withoutIndex
     });
   }
 
@@ -76,7 +95,18 @@ class BiasMap extends Component {
 
   showDemographics(state) {
     this.setState({
-      hoveredState: state
+      hoveredState: state ? state : "No precinct hovered.",
+      demographicContent: state ? [
+      'White: VAP: 1,000,000, Pop: 1,000,000 ',
+      'Hispanic: VAP: 1,000,000, Pop: 1,000,000',
+      'Black: VAP: 1,000,000, Pop: 1,000,000',
+      'Asian: VAP: 1,000,000, Pop: 1,000,000',
+      'Native American: VAP: 1,000,000, Pop: 1,000,000',
+      'Hawaiian Pacific: VAP: 1,000,000, Pop: 1,000,000',
+      'Other: VAP: 1,000,000, Pop: 1,000,000'
+      ]
+      :
+      []
     })
   }
 
@@ -115,21 +145,20 @@ class BiasMap extends Component {
     return (
       <div id='app_container'>
         <Sidebar 
-          batchHistory={ this.state.batchHistory }
-          addBatchToHistory={ this.addBatchToHistory }
-          removeBatchFromHistory={ this.removeBatchFromHistory }
+          jobHistory={ this.state.jobHistory }
+          addJobToHistory={ this.addJobToHistory }
+          removeJobFromHistory={ this.removeJobFromHistory }
           activeState={ this.state.activeState } 
           setActiveState={ this.setActiveState }
           setVisibility={ this.setVisibility }
           visibility={ this.state.visibility }
+          jobLabelContent={ this.state.jobLabelContent }
         />
         <div id='map'>
           <MapContainer
             center={this.state.position} 
             zoom={this.state.zoom}
             zoomControl={false}
-            maxZoom={10}
-            minZoom={5}
             zoomSnap={0.10}
           >
             <MapConsumer>
@@ -169,7 +198,6 @@ class BiasMap extends Component {
                   <District 
                     key={index}
                     data={geojson}
-                    showDemographics={this.showDemographics}
                     setActiveState={this.setActiveState}
                   />
               ))
@@ -182,6 +210,7 @@ class BiasMap extends Component {
                 return (
                   <Precinct 
                     key={state}
+                    showDemographics={this.showDemographics}
                     data={this.state.precinct_geojsons[state]}
                   />
                 )
@@ -192,7 +221,10 @@ class BiasMap extends Component {
             <ZoomControl position='bottomright'/>
             <div className='leaflet-top leaflet-left'>
               <div className='leaflet-control'>
-                <Message icon='info circle' header={this.state.hoveredState} content={this.state.demographicContent}></Message>
+                <Message floating compact >
+                  <Message.Header> {this.state.hoveredState} </Message.Header>
+                  <Message.List items={this.state.demographicContent}/>
+                </Message>
               </div>
             </div>
               <div className='leaflet-top leaflet-right'>

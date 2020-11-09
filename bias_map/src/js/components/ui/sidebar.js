@@ -1,6 +1,6 @@
 import { Select, Tab, Label, Ref, Segment } from 'semantic-ui-react'
 import { generateSelection } from '../jsxHelper.js'
-import { BatchTab } from './batchTab.js'
+import { JobTab } from './jobTab.js'
 import { useState } from 'react'
 import { FilterTab } from './filterTab.js'
 import { HistoryTab } from './historyTab.js'
@@ -9,8 +9,8 @@ function Sidebar(props) {
     const states = ['Arkansas', 'Virginia', 'South Carolina']
     const tabs = [
         {
-            menuItem: { color: 'blue', key: 'Batches', icon: 'object group outline', content: 'Batches' },
-            render: () => <BatchTab addBatchToHistory={ props.addBatchToHistory } activeState={ props.activeState }/>,
+            menuItem: { color: 'blue', key: 'Jobs', icon: 'object group outline', content: 'Jobs' },
+            render: () => <JobTab jobLabelContent={props.jobLabelContent} addJobToHistory={ props.addJobToHistory } activeState={ props.activeState }/>,
         },
         {
             menuItem: { color: 'green', key: 'Filters', icon: 'filter', content: 'Filters' },
@@ -18,7 +18,7 @@ function Sidebar(props) {
         },
         {
             menuItem: { color: 'teal', key: 'History', icon: 'history', content: 'History' },
-            render: () => <HistoryTab batchHistory={ props.batchHistory } removeBatchFromHistory={props.removeBatchFromHistory}/>,
+            render: () => <HistoryTab jobHistory={ props.jobHistory } removeJobFromHistory={props.removeJobFromHistory}/>,
         },
     ]
 

@@ -14,16 +14,14 @@ function District(props) {
     <GeoJSON
       style={() => ({
         color: '#0422b0',
-        weight: 1,
-        fillColor: "#45a8de",
-        fillOpacity: 0.5,
+        weight: 1.5,
+        fillColor: "#40698f",
+        fillOpacity: 0.2,
       })}
       data={props.data} 
       onEachFeature={(feature, layer) => {
         const state = findState(feature.properties.District)
         layer.on({
-          mouseover: () => props.showDemographics(state),
-          mouseout: () => props.showDemographics('No state hovered'),
           click: () => props.setActiveState(state)
         })
       }}

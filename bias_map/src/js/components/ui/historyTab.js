@@ -1,44 +1,50 @@
 import { Label, Header, Icon, Form, Divider, Message, Segment } from 'semantic-ui-react'
 
 function HistoryTab(props) {
-  const renderHistory = batchInfo => {
+  const renderHistory = jobInfo => {
     return (
-      <Segment key={batchInfo.id}>
-        <Label onClick={() => props.removeBatchFromHistory(batchInfo.id)} color='red' icon='x' corner='right'></Label>
+      <Segment key={jobInfo.id}>
+        <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='right'></Label>
         <Header textAlign='center' as='h4'>
-          {`Batch #${batchInfo.id}`}
+          {`Job #${jobInfo.id}`}
           <Header.Subheader>
               <Label size='large'>
                 <Icon name='star'></Icon>
                 State
-                <Label.Detail content={batchInfo.state}> 
+                <Label.Detail content={jobInfo.state}> 
+                </Label.Detail>
+              </Label>
+              <Label size='large'>
+                <Icon name='plus'></Icon>
+                Status
+                <Label.Detail content={jobInfo.status}> 
                 </Label.Detail>
               </Label>
           </Header.Subheader>
         </Header>
         <Label  size='large' color='teal' basic >
           Plans:
-            <Label.Detail content={batchInfo.plans}>
+            <Label.Detail content={jobInfo.plans}>
             </Label.Detail>
         </Label>
         <Label  size='large' color='teal' basic >
             Population Variance:
-            <Label.Detail content={batchInfo.populationVariance}>
+            <Label.Detail content={jobInfo.populationVariance}>
             </Label.Detail>
         </Label>
         <Label  size='large' color='teal' basic >
             Compactness:
-            <Label.Detail content={batchInfo.compactness}>
+            <Label.Detail content={jobInfo.compactness}>
             </Label.Detail>
         </Label>
         <Label  size='large' color='teal' basic >
             Racial/Ethnic Groups:
-            <Label.Detail content={batchInfo.groups.length > 0 ? batchInfo.groups.join(", ") : "None"}>
+            <Label.Detail content={jobInfo.groups.length > 0 ? jobInfo.groups.join(", ") : "None"}>
             </Label.Detail>
         </Label>
         <Label  size='large' color='teal' basic >
             Server:
-            <Label.Detail content={batchInfo.server}>
+            <Label.Detail content={jobInfo.server}>
             </Label.Detail>
         </Label>
       </Segment>
@@ -49,22 +55,22 @@ function HistoryTab(props) {
       <Form>
         <Message>
           <Header textAlign='center' as='h2'>
-            Batch History
+            Job History
             <Header.Subheader>
-            View the history of generated batches.
+            View the history of generated jobs.
             </Header.Subheader>
           </Header>
         </Message>
         <Divider horizontal>
           <Header as='h4'>
             <Icon name='bars' />
-            Batches
+            Jobs
           </Header>
         </Divider>
         <Segment style={{ overflow: 'auto', maxHeight: '64vh' }}>
           { 
-            Object.keys(props.batchHistory).map(key => 
-              renderHistory(props.batchHistory[key]))
+            Object.keys(props.jobHistory).map(key => 
+              renderHistory(props.jobHistory[key]))
           }
         </Segment>
       </Form>
