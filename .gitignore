@@ -1,0 +1,64 @@
+node_modules/
+spring/target
+spring/.mvn
+spring/.vscode
+spring/HELP.md
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven (from: https://github.com/github/gitignore/blob/master/Maven.gitignore)
+
+spring/target/
+spring/pom.xml.tag
+spring/pom.xml.releaseBackup
+spring/pom.xml.versionsBackup
+spring/pom.xml.next
+spring/release.properties
+spring/dependency-reduced-pom.xml
+spring/buildNumber.properties
+spring/.mvn/timing.properties
+# https://github.com/takari/maven-wrapper#usage-without-binary-jar
+spring/.mvn/wrapper/maven-wrapper.jar
+
+# VSCode
+.vscode
+.classpath
+.project
+.settings/
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
