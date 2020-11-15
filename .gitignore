@@ -69,3 +69,4 @@ yarn-error.log*
 
 spring/bin/
 spring/mvnw.cmd
+react/package-lock.json

@@ -24,9 +24,9 @@ public class StateManager {
 
         JSONParser parser = new JSONParser();
         String filename = "";
-        if (state == States.VIRGINIA) filename = "static/VA_Precincts.json";
-        if (state == States.ARKANSAS) filename = "static/AR_Precincts.json";
-        if (state == States.SOUTH_CAROLINA) filename = "static/SC_Precincts.json";
+        if (state == States.VIRGINIA) filename = "static/VA_map.json";
+        if (state == States.ARKANSAS) filename = "static/AR_map.json";
+        if (state == States.SOUTH_CAROLINA) filename = "static/SC_map.json";
 
         Resource resource = new ClassPathResource(filename);
         Object obj;
