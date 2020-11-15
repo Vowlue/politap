@@ -10,10 +10,10 @@ body {
     display: flex;
 }
 #sidebar {
-    width: 20%;
+    width: 28%;
 }
 #map {
-    width: 80%;
+    width: 72%;
 }
 .leaflet-container {
     height: 100%;

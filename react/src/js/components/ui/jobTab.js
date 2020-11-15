@@ -45,7 +45,7 @@ function JobTab(props) {
             <Header textAlign='center' as='h2'>
               Job Configuration
               <Header.Subheader>
-              Configure your own Job job to run.
+              Configure your own job to run.
               </Header.Subheader>
             </Header>
           </Message>
@@ -78,7 +78,7 @@ function JobTab(props) {
           </Form.Field>
           {censusCategories.map(category => createCheckbox(category, setGroup))}
           <Form.Field>
-            Run this Job job in the{' '}
+            Run this job on the{' '}
             <Ref innerRef={setServerRef}>
               <Dropdown floating inline options={generateSelection(servers)} onChange={setServer} defaultValue={jobInfo.server} />
             </Ref>

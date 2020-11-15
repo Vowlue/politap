@@ -23,7 +23,7 @@ class BiasMap extends Component {
     super(props)
     this.state = {
       position: [38.305,-96.156],
-      zoom: 5,
+      zoom: 4.75,
       hoveredState: 'No precinct hovered',
       activeState: null,
       demographicContent: [],
