@@ -1,4 +1,4 @@
-import { Label, Header, Icon, Form, Divider, Message, Segment } from 'semantic-ui-react'
+import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid } from 'semantic-ui-react'
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
@@ -8,45 +8,54 @@ function HistoryTab(props) {
         <Header textAlign='center' as='h4'>
           {`Job #${jobInfo.id}`}
           <Header.Subheader>
-              <Label size='large'>
+              <Label color='black' size='large'>
                 <Icon name='star'></Icon>
                 State
                 <Label.Detail content={jobInfo.state}> 
                 </Label.Detail>
               </Label>
-              <Label size='large'>
-                <Icon name='plus'></Icon>
+              <Label color='green' size='large'>
                 Status
                 <Label.Detail content={jobInfo.status}> 
                 </Label.Detail>
               </Label>
           </Header.Subheader>
         </Header>
-        <Label  size='large' color='teal' basic >
-          Plans:
-            <Label.Detail content={jobInfo.plans}>
-            </Label.Detail>
-        </Label>
-        <Label  size='large' color='teal' basic >
-            Population Variance:
-            <Label.Detail content={jobInfo.populationVariance}>
-            </Label.Detail>
-        </Label>
-        <Label  size='large' color='teal' basic >
-            Compactness:
-            <Label.Detail content={jobInfo.compactness}>
-            </Label.Detail>
-        </Label>
-        <Label  size='large' color='teal' basic >
-            Racial/Ethnic Groups:
-            <Label.Detail content={jobInfo.groups.length > 0 ? jobInfo.groups.join(", ") : "None"}>
-            </Label.Detail>
-        </Label>
-        <Label  size='large' color='teal' basic >
-            Server:
-            <Label.Detail content={jobInfo.server}>
-            </Label.Detail>
-        </Label>
+        <Grid columns='equal' divided padded>
+          <Grid.Row>
+            <Grid.Column>
+              <Label size='large' color='teal' basic >
+              Plans:
+                <Label.Detail content={jobInfo.plans}>
+                </Label.Detail>
+              </Label>
+              <Label size='large' color='teal' basic >
+              Population Variance:
+                <Label.Detail content={jobInfo.populationVariance}>
+                </Label.Detail>
+              </Label>
+              <Label  size='large' color='teal' basic >
+              Compactness:
+                <Label.Detail content={jobInfo.compactness}>
+                </Label.Detail>
+              </Label>
+              <Label  size='large' color='teal' basic >
+              Server:
+                <Label.Detail content={jobInfo.server}>
+                </Label.Detail>
+              </Label>
+            </Grid.Column>
+            <Grid.Column stretched>
+              <Label  size='large' color='teal' basic >
+              Racial/Ethnic Groups:
+                <Label.Detail content={jobInfo.groups.length > 0 ? jobInfo.groups.join(", ") : "None"}>
+                </Label.Detail>
+              </Label>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+        <br />
+        <Button color='red'>Cancel Job</Button>
       </Segment>
     )
   }
