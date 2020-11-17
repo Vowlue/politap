@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class GenericResponse {
-    private String errormessage;
+    private String errorMessage;
     private boolean error;
     private int ID;
     private JobStatus jobStatus;
