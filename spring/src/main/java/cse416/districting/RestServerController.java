@@ -2,6 +2,7 @@ package cse416.districting;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,7 @@ public class RestServerController {
 	}
 
 	private States currentState;
+	private int IDCounter = 1;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
 	public JSONObject getStateData(@RequestBody GenericRequest req) {
@@ -43,17 +45,48 @@ public class RestServerController {
 	}
 
 	@PostMapping(value="/initiateJob", consumes = "application/json")
-	public int initiateJob(@RequestBody JobInfo jobInfo) {
-		return jobManager.createJob(jobInfo);
+	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
+		jobManager.createJob(jobInfo, IDCounter);
+		GenericResponse res = new GenericResponse();
+		res.setID(IDCounter);
+		IDCounter++;
+		return res;
 	}
 
 	@PostMapping(value="/cancelJob", consumes = "application/json")
-	public boolean cancelJob(@RequestBody GenericRequest req) {
-		return jobManager.cancelJob(req.getID());
+	public GenericResponse cancelJob(@RequestBody GenericRequest req) {
+		GenericResponse res = new GenericResponse();
+		if (!jobManager.cancelJob(req.getID())){
+			res.setError(true);
+			res.setErrorMessage("ID not found");
+			return res;
+		}
+		res.setError(false);
+		return res;
 	}
 
 	@PostMapping(value="/deleteJob", consumes = "application/json")
-	public boolean deleteJob(@RequestBody GenericRequest req) {
-		return jobManager.deleteJob(req.getID());
+	public GenericResponse deleteJob(@RequestBody GenericRequest req) {
+		GenericResponse res = new GenericResponse();
+		if (!jobManager.deleteJob(req.getID())){
+			res.setError(true);
+			res.setErrorMessage("ID not found");
+			return res;
+		}
+		res.setError(false);
+		return res;
+	}
+
+	@PostMapping(value="/checkJob", consumes = "application/json")
+	public GenericResponse checkJob(@RequestBody GenericRequest req) {
+		GenericResponse res = new GenericResponse();
+		JobStatus status = jobManager.jobStatus(req.getID());
+		if (status == JobStatus.ERROR){
+			res.setError(true);
+			res.setErrorMessage("ID not found");
+			return res;
+		}
+		res.setJobStatus(status);
+		return res;
 	}
 }

@@ -20,8 +20,6 @@ public class StateManager {
     }
 
     public JSONObject getDefaultStateInfo(States state) {
-        if(StateList.containsKey(state)) return StateList.get(state).getMap();
-
         JSONParser parser = new JSONParser();
         String filename = "";
         if (state == States.VIRGINIA) filename = "static/VA_Precinct.json";
@@ -35,7 +33,7 @@ public class StateManager {
             JSONObject jsonObject = (JSONObject) obj;
             StateObject stateObject = new StateObject();
             stateObject.setState(state);
-            stateObject.setMap(jsonObject);
+            stateObject.processData(jsonObject);
             StateList.put(state,stateObject);
             //If successful return object
             return jsonObject;
