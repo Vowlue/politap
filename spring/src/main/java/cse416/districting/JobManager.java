@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Async;
 import cse416.districting.Enums.JobStatus;
 import io.socket.client.IO;
 import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 public class JobManager {
 
@@ -18,8 +19,11 @@ public class JobManager {
     public JobManager() {
         jobs = new HashMap<Integer, Job>();
         try {
-            this.socket = IO.socket("http://localhost:1337");
+            System.out.println("connecting to socket");
+            this.socket = IO.socket("http://localhost:3000");
+            socket.connect();
         } catch (URISyntaxException e) {
+            System.out.println(e.toString());
             e.printStackTrace();
         }
 
