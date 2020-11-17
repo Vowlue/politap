@@ -1,31 +1,50 @@
 package cse416.districting;
 
-import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 
+import org.json.JSONObject;
 import org.springframework.scheduling.annotation.Async;
 
 import cse416.districting.Enums.JobStatus;
+import io.socket.client.IO;
+import io.socket.client.Socket;
 
 public class JobManager {
-    
-    private HashMap<Integer,Job> jobs;
 
-    public JobManager(){
-        jobs = new HashMap<Integer,Job>();
+    private HashMap<Integer, Job> jobs;
+    private Socket socket;
+
+    public JobManager() {
+        jobs = new HashMap<Integer, Job>();
+        try {
+            this.socket = IO.socket("http://localhost:1337");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Async("threadPoolTaskExecutor")
-    public void createJob(JobInfo jobInfo, int IDCounter){
+    public void createJob(JobInfo jobInfo, int IDCounter) {
         Job job = new Job(jobInfo, IDCounter);
-        jobs.put(IDCounter,job);
+        jobs.put(IDCounter, job);
         ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/java/cse416/districting/script/testscript.py");
         processBuilder.redirectErrorStream(true);
         try {
+            //call script locally
             Process process = processBuilder.start();
             job.setProcess(process);
             process.waitFor();
-        } catch (IOException | InterruptedException e) {
+
+            //do something with result
+            //------------------------
+
+            //tell react that job is done
+            JSONObject obj = new JSONObject();
+            obj.put("jobID", IDCounter);
+            socket.emit("jobFinished", obj);
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
