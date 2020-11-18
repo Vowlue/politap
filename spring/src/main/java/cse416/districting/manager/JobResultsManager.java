@@ -1,4 +1,4 @@
-package cse416.districting;
+package cse416.districting.manager;
 
 public class JobResultsManager {
 

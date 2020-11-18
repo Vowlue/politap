@@ -1,9 +1,11 @@
-package cse416.districting;
+package cse416.districting.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
 import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
+import cse416.districting.dto.*;
+import cse416.districting.manager.*;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.json.simple.JSONObject;
@@ -24,11 +26,6 @@ public class RestServerController {
 
 	@Autowired
 	private StateManager stateManager;
-
-	@RequestMapping("/")
-	public String index() {
-		return "Greetings from Spring Boot!";
-	}
 
 	private States currentState;
 	private int IDCounter = 1;

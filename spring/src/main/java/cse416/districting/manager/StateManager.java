@@ -1,6 +1,8 @@
-package cse416.districting;
+package cse416.districting.manager;
 
 import cse416.districting.Enums.States;
+import cse416.districting.model.StateObject;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -10,10 +12,11 @@ import org.springframework.core.io.Resource;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Map;
 
 public class StateManager {
 
-    private HashMap<States,StateObject> StateList;
+    private Map<States,StateObject> StateList;
 
     public StateManager(){
         StateList = new HashMap<>();
@@ -31,8 +34,7 @@ public class StateManager {
         try {
             obj = parser.parse(new InputStreamReader(resource.getInputStream()));
             JSONObject jsonObject = (JSONObject) obj;
-            StateObject stateObject = new StateObject();
-            stateObject.setState(state);
+            StateObject stateObject = new StateObject(state);
             stateObject.processData(jsonObject);
             StateList.put(state,stateObject);
             //If successful return object

@@ -1,4 +1,4 @@
-package cse416.districting;
+package cse416.districting.model;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

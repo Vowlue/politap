@@ -1,6 +1,4 @@
-package cse416.districting;
-
-import java.util.List;
+package cse416.districting.dto;
 
 import cse416.districting.Enums.States;
 import lombok.Getter;
@@ -10,8 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Districting{
-    private int id;
+public class GenericRequest {
     private States state;
-    private List<District> districts;
+    private int ID;
 }

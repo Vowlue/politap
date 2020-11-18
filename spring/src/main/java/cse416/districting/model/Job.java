@@ -1,9 +1,10 @@
-package cse416.districting;
+package cse416.districting.model;
 
 import java.util.concurrent.Future;
 
 import org.springframework.stereotype.Component;
 
+import cse416.districting.dto.JobInfo;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

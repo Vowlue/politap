@@ -1,4 +1,4 @@
-package cse416.districting;
+package cse416.districting.dto;
 
 import cse416.districting.Enums.JobStatus;
 import lombok.Getter;

@@ -1,6 +1,7 @@
-package cse416.districting;
+package cse416.districting.model;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,7 +16,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class StateObject {
     private States state;
-    private HashMap<String,Precinct> precincts;
+    private Map<String,Precinct> precincts;
+
+    public StateObject(States state){
+        this.state = state;
+    }
 
     public void processData(JSONObject obj){
         precincts = new HashMap<>();
