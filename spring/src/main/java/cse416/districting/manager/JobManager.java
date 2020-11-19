@@ -1,6 +1,7 @@
 package cse416.districting.manager;
 
 import cse416.districting.Enums.JobStatus;
+import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
 
@@ -9,14 +10,18 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 
 public class JobManager {
 
     private Map<Integer, Job> jobs;
 
-    public JobManager() {
+    private SimpMessagingTemplate simpMessagingTemplate;
+
+    public JobManager(SimpMessagingTemplate simpMessagingTemplate) {
         jobs = new HashMap<Integer, Job>();
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @Async("threadPoolTaskExecutor")
@@ -34,6 +39,12 @@ public class JobManager {
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
+            
+            GenericResponse res = new GenericResponse();
+            res.setJobStatus(JobStatus.RUNNING);
+            res.setID(job.getJobID());
+            simpMessagingTemplate.convertAndSend("/jobStatus", res);
+
             job.setProcess(process);
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
@@ -42,6 +53,8 @@ public class JobManager {
             System.out.println(s);
             //do something with result
             //------------------------
+            res.setJobStatus(JobStatus.DONE);
+            simpMessagingTemplate.convertAndSend("/jobStatus", res);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

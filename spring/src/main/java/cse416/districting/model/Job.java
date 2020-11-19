@@ -1,7 +1,5 @@
 package cse416.districting.model;
 
-import java.util.concurrent.Future;
-
 import org.springframework.stereotype.Component;
 
 import cse416.districting.dto.JobInfo;
@@ -21,11 +19,6 @@ public class Job {
     public Job(JobInfo info, int ID) {
         jobInfo = info;
         jobID = ID;
-    }
-
-    public Future<Boolean> start() {
-        
-        return null;
     }
     
     public void cancel(){
