@@ -18,7 +18,7 @@ import { Sidebar } from './js/components/ui/sidebar.js'
 import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
-import { convertEnumToString } from './js/helpers/stringHelper.js'
+import { convertEnumToString, stringifyNumber } from './js/helpers/stringHelper.js'
 
 import { deleteJob, initiateJob, getStateData } from './js/apis/axios.js'
 
@@ -51,6 +51,7 @@ class BiasMap extends Component {
     this.modifyJobStatus = this.modifyJobStatus.bind(this)
 
     this.stateBounds = []
+    this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.5, 0]}
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
   }
 
@@ -109,6 +110,11 @@ class BiasMap extends Component {
   }
 
   showDemographics(precinct, county, stats) {
+    if(stats) {
+      for (let i = 0; i<stats.length; i++) {
+        stats[i] = stringifyNumber(stats[i])
+      }
+    }
     this.setState({
       hoveredPrecinct: precinct ? precinct + ' - ' + county : "No precinct hovered.",
       demographicContent: precinct ? [
@@ -155,7 +161,12 @@ class BiasMap extends Component {
   }
 
   setActiveState(state) {
+    console.log(state)
     this.map.fitBounds(this.stateBounds[state])
+    console.log(this.map.getCenter())
+    if (state in this.stateAdjustments){
+      setTimeout(() => this.map.setView([this.map.getCenter().lat + this.stateAdjustments[state][0], this.map.getCenter().lng + this.stateAdjustments[state][1]]), 350)
+    }
     this.setPrecinctData(state)
     this.setState({
       activeState: state
@@ -245,7 +256,7 @@ class BiasMap extends Component {
               null
             }
             <ZoomControl position='bottomright'/>
-            <div className='leaflet-top leaflet-left'>
+            <div className='leaflet-bottom leaflet-left'>
               <div className='leaflet-control'>
                 <Message floating compact >
                   <Message.Header> {this.state.hoveredPrecinct} </Message.Header>

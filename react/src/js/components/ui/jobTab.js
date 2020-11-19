@@ -45,7 +45,7 @@ function JobTab(props) {
             <Header textAlign='center' as='h2'>
               Job Configuration
               <Header.Subheader>
-              Configure your own job to run.
+              Configure a job to run.
               </Header.Subheader>
             </Header>
           </Message>
