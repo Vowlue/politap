@@ -3,7 +3,6 @@ import Plot from 'react-plotly.js'
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
-    console.log("jobinfo " + jobInfo)
     return (
       <Segment key={jobInfo.id}>
         <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='right'></Label>

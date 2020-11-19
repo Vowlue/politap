@@ -20,7 +20,7 @@ import 'semantic-ui-css/semantic.min.css'
 
 import { convertEnumToString } from './js/helpers/stringHelper.js'
 
-import axios from 'axios'
+import { deleteJob, initiateJob, getStateData } from './js/apis/axios.js'
 
 class BiasMap extends Component {
   constructor(props) {
@@ -55,42 +55,44 @@ class BiasMap extends Component {
   }
 
   modifyJobStatus(id, status) {
-    let newJobHistory = {...this.state.jobHistory}
-    newJobHistory[id].status = status
-    this.setState({
-      jobHistory: newJobHistory
-    })
+    if(id in this.state.jobHistory) {
+      let newJobHistory = {...this.state.jobHistory}
+      newJobHistory[id].status = status
+      this.setState({
+        jobHistory: newJobHistory
+      })
+    }
   }
 
-  addJobToHistory(jobInfo) {
+  async addJobToHistory(jobInfo) {
     jobInfo.state = this.state.activeState
-    axios.post(`http://localhost:8080/initiateJob`, {
-        plans: jobInfo.plans,
-        populationVariance: jobInfo.populationVariance,
-        compactness: jobInfo.compactness.toUpperCase(),
-        state: jobInfo.state.toUpperCase(),
-        isLocal: jobInfo.server === 'Local',
-        demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
-    })
-      .then(res => {
-        jobInfo.id = res.data.id
-        this.setState({
-          jobLabelContent: `Job #${res.data.id} has been started.`,
-          jobHistory: {
-            ...this.state.jobHistory,
-            [res.data.id]: jobInfo
-          }
-        })
-      })
+    initiateJob(
+        {
+          plans: jobInfo.plans,
+          populationVariance: jobInfo.populationVariance,
+          compactness: jobInfo.compactness.toUpperCase(),
+          state: jobInfo.state.toUpperCase(),
+          isLocal: jobInfo.server === 'Local',
+          demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
+        },
+        res => {
+          jobInfo.id = res
+          this.setState({
+            jobLabelContent: `Job #${res} has been started.`,
+            jobHistory: {
+              ...this.state.jobHistory,
+              [res]: jobInfo
+            }
+          })
+        },
+        err => {
+          console.log(err)
+        }
+    )
   }
 
   removeJobFromHistory(index) {
-    axios.post(`http://localhost:8080/deleteJob`, {
-        ID: index
-    })
-      .then(res => {
-        console.log(res.data)
-      })
+    deleteJob({ID: index})
     const { [index]: value, ...withoutIndex } = this.state.jobHistory
     this.setState({
       jobHistory: withoutIndex
@@ -134,25 +136,30 @@ class BiasMap extends Component {
 
   setPrecinctData(state) {
     if (!(state in this.state.precinct_geojsons)) {
-      axios.post(`http://localhost:8080/getStateData`, { state: this.getJavaState(state) })
-      .then(res => {
-        this.setState({
-          precinct_geojsons: {
-            ...this.state.precinct_geojsons,
-            [state]: res.data.jsonObject
-          }
-        })
-        this.setVisibility('precinct', true)
-      })
+      getStateData(
+        { state: this.getJavaState(state) },
+        res => {
+          this.setState({
+            precinct_geojsons: {
+              ...this.state.precinct_geojsons,
+              [state]: res
+            }
+          })
+          this.setVisibility('precinct', true)
+        },
+        err => {
+          console.log(err)
+        }
+      )
     }
   }
 
   setActiveState(state) {
     this.map.fitBounds(this.stateBounds[state])
+    this.setPrecinctData(state)
     this.setState({
       activeState: state
     })
-    this.setPrecinctData(state)
   }
 
   render() {
