@@ -10,7 +10,6 @@ function Precinct(props) {
       })}
       data={props.data.features} 
       onEachFeature={(feature, layer) => {
-        console.log(feature.properties)
         const precinct = feature.properties.NAME10
         layer.on({
           mouseover: () => props.showDemographics(precinct, feature.properties.COUNTY, [feature.properties["Total VAP"], feature.properties.Total, 
