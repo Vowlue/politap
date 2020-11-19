@@ -18,13 +18,15 @@ import { Sidebar } from './js/components/ui/sidebar.js'
 import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
+import SockJsClient from 'react-stomp'
+
 class BiasMap extends Component {
   constructor(props) {
     super(props)
     this.state = {
       position: [38.305,-96.156],
       zoom: 4.75,
-      hoveredState: 'No precinct hovered',
+      hoveredPrecinct: 'No precinct hovered',
       activeState: null,
       demographicContent: [],
       visibility: {
@@ -60,9 +62,9 @@ class BiasMap extends Component {
         demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
     })
       .then(res => {
-        jobInfo.id = res.data
+        jobInfo.id = res.data.id
         this.setState({
-          jobLabelContent: `Job #${res.data} has been started.`,
+          jobLabelContent: `Job #${res.data.id} has been started.`,
           jobHistory: {
             ...this.state.jobHistory,
             [res.data]: jobInfo
@@ -93,17 +95,18 @@ class BiasMap extends Component {
     })
   }
 
-  showDemographics(state) {
+  showDemographics(precinct, county, stats) {
     this.setState({
-      hoveredState: state ? state : "No precinct hovered.",
-      demographicContent: state ? [
-      'White: VAP: 1,000,000, Pop: 1,000,000 ',
-      'Hispanic: VAP: 1,000,000, Pop: 1,000,000',
-      'Black: VAP: 1,000,000, Pop: 1,000,000',
-      'Asian: VAP: 1,000,000, Pop: 1,000,000',
-      'Native American: VAP: 1,000,000, Pop: 1,000,000',
-      'Hawaiian Pacific: VAP: 1,000,000, Pop: 1,000,000',
-      'Other: VAP: 1,000,000, Pop: 1,000,000'
+      hoveredPrecinct: precinct ? precinct + ' - ' + county : "No precinct hovered.",
+      demographicContent: precinct ? [
+      `Whole: VAP: ${stats[0]}, POP: ${stats[1]}`,
+      `White: VAP: ${stats[2]}, POP: ${stats[3]} `,
+      `Hispanic: VAP: ${stats[4]}, POP: ${stats[5]} `,
+      `Black: VAP: ${stats[6]}, POP: ${stats[7]} `,
+      `Asian: VAP: ${stats[8]}, POP: ${stats[9]} `,
+      `Native American: VAP: ${stats[10]}, POP: ${stats[11]} `,
+      `Hawaiian Pacific: VAP: ${stats[12]}, POP: ${stats[13]} `,
+      `Other: VAP: ${stats[14]}, POP: ${stats[15]} `
       ]
       :
       []
@@ -144,6 +147,20 @@ class BiasMap extends Component {
   render() {
     return (
       <div id='app_container'>
+        <SockJsClient url='http://localhost:8080/webSocket/'
+          topics={['/jobStatus']}
+          onConnect={() => {
+              console.log("connected");
+          }}
+          onDisconnect={() => {
+              console.log("Disconnected");
+          }}
+          onMessage={(msg) => {
+              console.log(msg);
+          }}
+          ref={(client) => {
+              this.clientRef = client
+        }}/>
         <Sidebar 
           jobHistory={ this.state.jobHistory }
           addJobToHistory={ this.addJobToHistory }
@@ -222,7 +239,7 @@ class BiasMap extends Component {
             <div className='leaflet-top leaflet-left'>
               <div className='leaflet-control'>
                 <Message floating compact >
-                  <Message.Header> {this.state.hoveredState} </Message.Header>
+                  <Message.Header> {this.state.hoveredPrecinct} </Message.Header>
                   <Message.List items={this.state.demographicContent}/>
                 </Message>
               </div>

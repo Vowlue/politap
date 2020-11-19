@@ -36,7 +36,7 @@ function Sidebar(props) {
             <Segment basic textAlign={"center"}>
             <Label basic size='huge' color='black' icon='map' content={props.activeState ? props.activeState : 'No state selected'}></Label>
             </Segment>
-          <Label horizontal basic pointing='right' color='violet' size='large'>Choose a State</Label>
+          <Label horizontal basic color='violet' size='large'>Choose a State</Label>
             <Ref innerRef={ setRef }>
                 <Select 
                     placeholder='Select a State'

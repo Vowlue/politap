@@ -1,28 +1,23 @@
 import { GeoJSON } from 'react-leaflet'
 
-
-const findState = (FP) => {
-  if (FP === "05")
-    return "Arkansas"
-  else if (FP === "51")
-    return "Virginia"
-  else
-    return "South Carolina"
-}
-
 function Precinct(props) {
   return (
     <GeoJSON
       style={() => ({
-        color: '#000142',
-        weight: 0.2,
+        color: '#003b11',
+        weight: 0.3,
         fillOpacity: 0,
       })}
       data={props.data.features} 
       onEachFeature={(feature, layer) => {
-        const state = findState(feature.properties.STATEFP10)
+        console.log(feature.properties)
+        const precinct = feature.properties.NAME10
         layer.on({
-          mouseover: () => props.showDemographics(state),
+          mouseover: () => props.showDemographics(precinct, feature.properties.COUNTY, [feature.properties["Total VAP"], feature.properties.Total, 
+          feature.properties["White"], feature.properties["White VAP"], feature.properties["Hispanic or Latino"], feature.properties["Hispanic or Latino VAP"], 
+          feature.properties["Black or African American"], feature.properties["Black or African American VAP"], feature.properties["Asian"], feature.properties["Asian VAP"], 
+          feature.properties["American Indian and Alaska Native"], feature.properties["American Indian and Alaska Native VAP"], feature.properties["Native Hawaiian and Other Pacific Islander"], feature.properties["Native Hawaiian and Other Pacific Islander VAP"], 
+          feature.properties["Some Other Race"], feature.properties["Some Other Race VAP"]]),
           mouseout: () => props.showDemographics(null),
         })
       }}

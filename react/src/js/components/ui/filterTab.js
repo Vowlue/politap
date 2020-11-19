@@ -15,13 +15,13 @@ function FilterTab(props) {
           <Divider horizontal>
             <Header as='h4'>
               <Icon name='sort' />
-              Filters
+              Default Filters
             </Header>
           </Divider>
-          <List divided selection>
+          <List selection>
             <List.Item>
             <Button
-              color='green' 
+              color='blue'
               basic={!props.visibility.district} 
               content='Initial Districts' 
               size='large'
@@ -42,6 +42,12 @@ function FilterTab(props) {
             />
             </List.Item>
           </List>
+          <Divider horizontal>
+            <Header as='h4'>
+              <Icon name='sort' />
+              Job Result Filters
+            </Header>
+          </Divider>
         </Form>
     )
 }

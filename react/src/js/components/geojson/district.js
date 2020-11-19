@@ -13,9 +13,9 @@ function District(props) {
   return (
     <GeoJSON
       style={() => ({
-        color: '#0422b0',
+        color: '#0E6EB8',
         weight: 1.5,
-        fillColor: "#40698f",
+        fillColor: "#0E6EB8",
         fillOpacity: 0.2,
       })}
       data={props.data} 

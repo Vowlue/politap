@@ -1,4 +1,5 @@
-import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid } from 'semantic-ui-react'
+import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Popup } from 'semantic-ui-react'
+import Plot from 'react-plotly.js'
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
@@ -56,6 +57,20 @@ function HistoryTab(props) {
         </Grid>
         <br />
         <Button color='red'>Cancel Job</Button>
+        <Popup trigger={<Button color='teal' content='Box Plot' />}>
+          <Popup.Content>
+            <Plot
+                data={[
+                  {
+                    x: [1, 2, 3,4,5,6,7,8,9],
+                    type: 'box',
+                    marker: {color: 'red'},
+                  }
+                ]}
+                layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
+              />
+          </Popup.Content>
+        </Popup>
       </Segment>
     )
   }
