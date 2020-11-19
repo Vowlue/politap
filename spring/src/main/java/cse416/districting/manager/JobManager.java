@@ -4,6 +4,7 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
+import cse416.districting.model.JobResults;
 import lombok.Setter;
 
 import java.io.BufferedReader;
@@ -33,26 +34,29 @@ public class JobManager {
 
     private void runLocalProcess(Job job){
         String stateName = job.getJobInfo().getState().toString();
-        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/testscript.py", stateName);
+        int jobID = job.getJobID();
+        ProcessBuilder processBuilder = new ProcessBuilder("py", 
+                                                           "spring/src/main/resources/script/testscript.py", 
+                                                           stateName, 
+                                                           Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
+            Thread.sleep(1000);
             Process process = processBuilder.start();
-            
-            GenericResponse res = new GenericResponse();
-            res.setJobStatus(JobStatus.RUNNING);
-            res.setID(job.getJobID());
-            simpMessagingTemplate.convertAndSend("/jobStatus", res);
-
+            sendMessage(JobStatus.RUNNING, jobID);
             job.setProcess(process);
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
             String s = reader.readLine();
             System.out.println("Script output:");
             System.out.println(s);
+
+            JobResults jr = new JobResults();
+            jr.setFilename(s);
+            job.setJobResults(jr);
             //do something with result
             //------------------------
-            res.setJobStatus(JobStatus.DONE);
-            simpMessagingTemplate.convertAndSend("/jobStatus", res);
+            sendMessage(JobStatus.DONE, jobID);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -61,6 +65,13 @@ public class JobManager {
 
     private void runSeawulfProcess(Job job){
         //implement later
+    }
+
+    private void sendMessage(JobStatus jobStatus, int jobID){
+        GenericResponse res = new GenericResponse();
+        res.setJobStatus(jobStatus);
+        res.setID(jobID);
+        simpMessagingTemplate.convertAndSend("/jobStatus", res);
     }
 
     public boolean cancelJob(int ID){
@@ -79,5 +90,10 @@ public class JobManager {
         if (!jobs.containsKey(ID)) return JobStatus.ERROR;
         if (jobs.get(ID).checkAlive()) return JobStatus.RUNNING;
         return JobStatus.DONE;
+    }
+
+    public String getDistrictingFile(int ID){
+        if (!jobs.containsKey(ID)) return null;
+        return jobs.get(ID).getJobResults().getFilename();
     }
 }

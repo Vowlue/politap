@@ -28,11 +28,6 @@ public class Config {
         return new StateManager();
         
     }
-
-    @Bean
-    public JobResultsManager jobResultsManager(){
-        return new JobResultsManager();
-    }
     
     @Bean("threadPoolTaskExecutor")
     public Executor taskExecutor() {

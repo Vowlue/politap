@@ -8,7 +8,6 @@ import cse416.districting.dto.*;
 import cse416.districting.manager.*;
 
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,23 +21,24 @@ public class RestServerController {
 	private JobManager jobManager;
 
 	@Autowired
-	private JobResultsManager jobResultsManager;
-
-	@Autowired
 	private StateManager stateManager;
 
 	private States currentState;
 	private int IDCounter = 1;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
-	public JSONObject getStateData(@RequestBody GenericRequest req) {
+	public GenericResponse getStateData(@RequestBody GenericRequest req) {
 		currentState = req.getState();
-		return stateManager.getDefaultStateInfo(req.getState());
+		GenericResponse res = new GenericResponse();
+		res.setJsonObject(stateManager.getDefaultStateInfo(req.getState()));
+		return res;
 	}
 
 	@RequestMapping("/getHeatMap")
-	public JSONObject getHeatMap(){
-		return stateManager.getStateHeatMap(currentState);
+	public GenericResponse getHeatMap(){
+		GenericResponse res = new GenericResponse();
+		res.setJsonObject(stateManager.getStateHeatMap(currentState));
+		return res;
 	}
 
 	@PostMapping(value="/initiateJob", consumes = "application/json")
@@ -84,6 +84,19 @@ public class RestServerController {
 			return res;
 		}
 		res.setJobStatus(status);
+		return res;
+	}
+
+	@PostMapping(value="/getDistrictingByJobID", consumes = "application/json")
+	public GenericResponse getDistrictingByJobID(@RequestBody GenericRequest req) {
+		GenericResponse res = new GenericResponse();
+		String filename = jobManager.getDistrictingFile(req.getID());
+		if (filename == null){
+			res.setError(true);
+			res.setErrorMessage("ID not found");
+			return res;
+		}
+		res.setJsonObject(stateManager.getDistrictingFile(filename));
 		return res;
 	}
 }
