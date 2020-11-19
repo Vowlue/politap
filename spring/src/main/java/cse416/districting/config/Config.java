@@ -1,11 +1,11 @@
 package cse416.districting.config;
 
+import java.util.HashMap;
 import java.util.concurrent.Executor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -15,12 +15,12 @@ import cse416.districting.manager.*;
 @EnableAsync
 @ComponentScan("cse416/districting")
 public class Config {
-
-    public SimpMessagingTemplate simpMessagingTemplate;
     
     @Bean
     public JobManager jobManager(){
-        return new JobManager(simpMessagingTemplate);
+        JobManager jm = new JobManager();
+        jm.setJobs(new HashMap<>());
+        return jm;
     }
 
     @Bean

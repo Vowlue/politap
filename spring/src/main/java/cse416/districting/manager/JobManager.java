@@ -4,25 +4,23 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
+import lombok.Setter;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 
+@Setter
 public class JobManager {
 
     private Map<Integer, Job> jobs;
 
+    @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
-
-    public JobManager(SimpMessagingTemplate simpMessagingTemplate) {
-        jobs = new HashMap<Integer, Job>();
-        this.simpMessagingTemplate = simpMessagingTemplate;
-    }
 
     @Async("threadPoolTaskExecutor")
     public void createJob(JobInfo jobInfo, int IDCounter) {
