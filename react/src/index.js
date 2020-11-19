@@ -128,7 +128,7 @@ class BiasMap extends Component {
         this.setState({
           precinct_geojsons: {
             ...this.state.precinct_geojsons,
-            [state]: res.data
+            [state]: res.data.jsonObject
           }
         })
         this.setVisibility('precinct', true)
