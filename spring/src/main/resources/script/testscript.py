@@ -36,8 +36,8 @@ def main(argv):
     df = df.dissolve(by='DISTRICTID')
 
     df.to_file(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.geojson', driver='GeoJSON')
-    time.sleep(5)
-    print(str(jobid) + '.geojson')
+    time.sleep(2)
+    print(str(state)[1:] + str(jobid) + '.geojson')
     
 if __name__ == '__main__':
     main(sys.argv[1:])

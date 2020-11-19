@@ -69,4 +69,4 @@ yarn-error.log*
 
 spring/bin/
 spring/mvnw.cmd
-react/package-lock.json
+spring/src/main/resources/json/generatedDistrictings
