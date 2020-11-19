@@ -1,5 +1,5 @@
 import { Select, Tab, Label, Ref, Segment } from 'semantic-ui-react'
-import { generateSelection } from '../jsxHelper.js'
+import { generateSelection } from '../../helpers/jsxHelper.js'
 import { JobTab } from './jobTab.js'
 import { useState } from 'react'
 import { FilterTab } from './filterTab.js'

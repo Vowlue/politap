@@ -1,5 +1,5 @@
 import { Button, Select, Input, Header, Icon, Dropdown, Form, Label, Divider, Message, Ref} from 'semantic-ui-react'
-import { generateSelection, createCheckbox } from '../jsxHelper.js'
+import { generateSelection, createCheckbox } from '../../helpers/jsxHelper.js'
 import { useState } from 'react'
 
 const servers = ['Local', 'Seawulf']
@@ -35,7 +35,7 @@ function JobTab(props) {
         jobInfo.groups.push(label)
       }}, 10)}
     const sendJob = () => {
-      jobInfo.status = "Started"
+      jobInfo.status = "Initialized"
       props.addJobToHistory(jobInfo)
     }
 

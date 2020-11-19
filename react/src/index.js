@@ -3,7 +3,7 @@ import { Component } from 'react'
 import { render } from 'react-dom'
 import { MapContainer, MapConsumer, TileLayer, ZoomControl } from 'react-leaflet'
 import { Button, Message } from 'semantic-ui-react'
-import axios from 'axios'
+import SockJsClient from 'react-stomp'
 
 import { stateGeoJSON } from './data/data.js'
 import { districtAKGeoJSON } from './data/districtAKGeoJSON.js'
@@ -18,7 +18,9 @@ import { Sidebar } from './js/components/ui/sidebar.js'
 import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
-import SockJsClient from 'react-stomp'
+import { convertEnumToString } from './js/helpers/stringHelper.js'
+
+import axios from 'axios'
 
 class BiasMap extends Component {
   constructor(props) {
@@ -34,7 +36,7 @@ class BiasMap extends Component {
         district: true,
         precinct: false
       },
-      jobHistory: [],
+      jobHistory: {},
       precinct_geojsons: {},
       jobLabelContent: "No job has been started yet."
     }
@@ -46,9 +48,18 @@ class BiasMap extends Component {
     this.setVisibility = this.setVisibility.bind(this)
     this.addJobToHistory = this.addJobToHistory.bind(this)
     this.removeJobFromHistory = this.removeJobFromHistory.bind(this)
+    this.modifyJobStatus = this.modifyJobStatus.bind(this)
 
     this.stateBounds = []
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
+  }
+
+  modifyJobStatus(id, status) {
+    let newJobHistory = {...this.state.jobHistory}
+    newJobHistory[id].status = status
+    this.setState({
+      jobHistory: newJobHistory
+    })
   }
 
   addJobToHistory(jobInfo) {
@@ -67,7 +78,7 @@ class BiasMap extends Component {
           jobLabelContent: `Job #${res.data.id} has been started.`,
           jobHistory: {
             ...this.state.jobHistory,
-            [res.data]: jobInfo
+            [res.data.id]: jobInfo
           }
         })
       })
@@ -148,19 +159,10 @@ class BiasMap extends Component {
     return (
       <div id='app_container'>
         <SockJsClient url='http://localhost:8080/webSocket/'
-          topics={['/jobStatus']}
-          onConnect={() => {
-              console.log("connected");
-          }}
-          onDisconnect={() => {
-              console.log("Disconnected");
-          }}
-          onMessage={(msg) => {
-              console.log(msg);
-          }}
-          ref={(client) => {
-              this.clientRef = client
-        }}/>
+          topics={ ['/jobStatus'] }
+          onMessage={ msg => { this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
+          ref={(client) => {this.clientRef = client}}
+        />
         <Sidebar 
           jobHistory={ this.state.jobHistory }
           addJobToHistory={ this.addJobToHistory }
