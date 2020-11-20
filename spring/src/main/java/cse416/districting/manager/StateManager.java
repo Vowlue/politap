@@ -56,7 +56,7 @@ public class StateManager {
     }
 
     public JSONObject getDistrictingFile(String filename){
-        Resource resource = new ClassPathResource("json/generatedDistrictings/" + filename);
+        Resource resource = new ClassPathResource("json/generatedDistrictings/" + filename + ".geojson");
         Object obj;
         JSONParser parser = new JSONParser();
         try {
