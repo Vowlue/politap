@@ -73,7 +73,7 @@ with open(state+'/'+state+'_map.json') as precinctmap:
         for vap in precinctinfo['vap']:
             newproperties[vap+' VAP'] = precinctinfo['vap'][vap]
         precinct['properties'] = newproperties
-    with open(state+"_Precinct.json",'w') as outfile:
+    with open(state+'/'+state+"_Precinct.json",'w') as outfile:
         json.dump(geomap,outfile)
         
 print('finished demographics')
