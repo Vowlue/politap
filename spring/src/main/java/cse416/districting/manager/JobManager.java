@@ -4,6 +4,7 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.io.BufferedReader;
@@ -16,18 +17,21 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 
 @Setter
+@Getter
 public class JobManager {
 
     private Map<Integer, Job> jobs;
+    private int idCounter = 1;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Async("threadPoolTaskExecutor")
-    public void createJob(JobInfo jobInfo, int idCounter) {
+    public void createJob(JobInfo jobInfo) {
         System.out.println(jobInfo.toString());
         Job job = new Job(jobInfo, idCounter);
         jobs.put(idCounter, job);
+        idCounter++;
         if (jobInfo.isLocal()) {
             runLocalProcess(job);
         } else {
@@ -46,13 +50,16 @@ public class JobManager {
             Process process = processBuilder.start();
             sendMessage(JobStatus.RUNNING, jobID);
 
+
             job.setProcess(process);
+            System.out.println(process);
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
             String output = reader.readLine();
             System.out.println("Script output:");
             System.out.println(output);
 
+            if (output.equals(null)) return;
             job.setFilename(output);
             sendMessage(JobStatus.DONE, jobID);
         } catch (InterruptedException | IOException e) {
@@ -87,7 +94,7 @@ public class JobManager {
         return JobStatus.DONE;
     }
 
-    public String getDistrictingFile(int ID){
+    public String getDistrictingFilename(int ID){
         return jobs.get(ID).getFilename();
     }
 }

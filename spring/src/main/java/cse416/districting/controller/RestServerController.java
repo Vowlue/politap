@@ -8,6 +8,9 @@ import cse416.districting.dto.*;
 import cse416.districting.manager.*;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.print.attribute.standard.JobState;
+
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,7 +28,6 @@ public class RestServerController {
 	private StateManager stateManager;
 
 	private States currentState;
-	private int idCounter = 1;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
 	public JSONObject getStateData(@RequestBody GenericRequest req) {
@@ -43,8 +45,9 @@ public class RestServerController {
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
 		GenericResponse res = new GenericResponse();
-		jobManager.createJob(jobInfo,idCounter);
-		res.setID(idCounter++);
+		int id = jobManager.getIdCounter();
+		jobManager.createJob(jobInfo);
+		res.setID(id);
 		return res;
 	}
 
@@ -57,6 +60,7 @@ public class RestServerController {
 
 	@PostMapping(value="/deleteJob", consumes = "application/json")
 	public GenericResponse deleteJob(@RequestBody GenericRequest req) {
+		System.out.println("IM HERE2");
 		GenericResponse res = new GenericResponse();
 		res.setSuccess(jobManager.deleteJob(req.getID()));
 		return res;
@@ -72,7 +76,7 @@ public class RestServerController {
 
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
 	public JSONObject[] getDistrictings(@RequestBody GenericRequest req) {
-		String filename = jobManager.getDistrictingFile(req.getID());
+		String filename = jobManager.getDistrictingFilename(req.getID());
 		JSONObject[] ret = {stateManager.getDistrictingFile(filename),
 			stateManager.getDistrictingFile(filename+"-2")};
 		return ret;
