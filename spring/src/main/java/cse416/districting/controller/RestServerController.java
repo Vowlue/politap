@@ -9,6 +9,9 @@ import cse416.districting.manager.*;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.print.attribute.standard.JobState;
 
 import org.json.simple.JSONObject;
@@ -60,7 +63,6 @@ public class RestServerController {
 
 	@PostMapping(value="/deleteJob", consumes = "application/json")
 	public GenericResponse deleteJob(@RequestBody GenericRequest req) {
-		System.out.println("IM HERE2");
 		GenericResponse res = new GenericResponse();
 		res.setSuccess(jobManager.deleteJob(req.getID()));
 		return res;
@@ -75,10 +77,11 @@ public class RestServerController {
 	}
 
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
-	public JSONObject[] getDistrictings(@RequestBody GenericRequest req) {
+	public Map<String,JSONObject> getDistrictings(@RequestBody GenericRequest req) {
 		String filename = jobManager.getDistrictingFilename(req.getID());
-		JSONObject[] ret = {stateManager.getDistrictingFile(filename),
-			stateManager.getDistrictingFile(filename+"-2")};
-		return ret;
+		Map<String,JSONObject> map = new HashMap<>();
+		map.put("random", stateManager.getDistrictingFile(filename));
+		map.put("random2", stateManager.getDistrictingFile(filename+"-2"));
+		return map;
 	}
 }
