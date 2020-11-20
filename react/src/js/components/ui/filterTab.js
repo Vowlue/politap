@@ -1,7 +1,6 @@
 import { Header, Icon, Form, Divider, Message, List, Button } from 'semantic-ui-react'
 
 function FilterTab(props) {
-
     return (
         <Form>
           <Message>
@@ -45,7 +44,7 @@ function FilterTab(props) {
           <Divider horizontal>
             <Header as='h4'>
               <Icon name='sort' />
-              Job Result Filters
+              Heat Map Filters
             </Header>
           </Divider>
         </Form>

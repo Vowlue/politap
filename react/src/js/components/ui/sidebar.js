@@ -18,7 +18,7 @@ function Sidebar(props) {
         },
         {
             menuItem: { color: 'teal', key: 'History', icon: 'history', content: 'History' },
-            render: () => <HistoryTab jobHistory={ props.jobHistory } removeJobFromHistory={props.removeJobFromHistory}/>,
+            render: () => <HistoryTab jobHistory={ props.jobHistory } removeJobFromHistory={props.removeJobFromHistory} visibility={props.visibility} setVisibility={ props.setVisibility }/>,
         },
     ]
 

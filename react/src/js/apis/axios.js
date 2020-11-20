@@ -16,8 +16,14 @@ const deleteJob = async (id, callback, errfunc) => {
 
 const getStateData = async (state, callback, errfunc) => {
   axios.post(`${server}/getStateData`, state)
-  .then(res => { callback(res.data.jsonObject) })
+  .then(res => { callback(res.data) })
   .catch(err => { errfunc(err) })
 }
 
-export { initiateJob, deleteJob, getStateData }
+const getDistrictings = async (id, callback, errfunc) => {
+  axios.post(`${server}/getDistrictings`, id)
+  .then(res => { callback(res.data) })
+  .catch(err => { errfunc(err) })
+}
+
+export { initiateJob, deleteJob, getStateData, getDistrictings }

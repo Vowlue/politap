@@ -19,8 +19,8 @@ import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
 import { convertEnumToString, stringifyNumber } from './js/helpers/stringHelper.js'
-
-import { deleteJob, initiateJob, getStateData } from './js/apis/axios.js'
+import { deleteJob, initiateJob, getStateData, getDistrictings } from './js/apis/axios.js'
+import { JobDistrict } from './js/components/geojson/jobdistrict.js'
 
 class BiasMap extends Component {
   constructor(props) {
@@ -28,17 +28,20 @@ class BiasMap extends Component {
     this.state = {
       position: [38.305,-96.156],
       zoom: 4.75,
+      stateDemographicStats: {},
       hoveredPrecinct: 'No precinct hovered',
       activeState: null,
       demographicContent: [],
       visibility: {
         state: true,
         district: true,
-        precinct: false
+        precinct: false,
+        random: false
       },
       jobHistory: {},
       precinct_geojsons: {},
-      jobLabelContent: "No job has been started yet."
+      jobLabelContent: "No job has been started yet.",
+      jobDistrictings: {}
     }
 
     //bindings
@@ -51,7 +54,7 @@ class BiasMap extends Component {
     this.modifyJobStatus = this.modifyJobStatus.bind(this)
 
     this.stateBounds = []
-    this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.5, 0]}
+    this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.35, 0]}
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
   }
 
@@ -63,32 +66,42 @@ class BiasMap extends Component {
         jobHistory: newJobHistory
       })
     }
-  }
-
-  async addJobToHistory(jobInfo) {
-    jobInfo.state = this.state.activeState
-    initiateJob(
+    if (status === 'DONE') {
+      getDistrictings(
         {
-          plans: jobInfo.plans,
-          populationVariance: jobInfo.populationVariance,
-          compactness: jobInfo.compactness.toUpperCase(),
-          state: jobInfo.state.toUpperCase(),
-          isLocal: jobInfo.server === 'Local',
-          demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
+          id: id
         },
         res => {
-          jobInfo.id = res
-          this.setState({
-            jobLabelContent: `Job #${res} has been started.`,
-            jobHistory: {
-              ...this.state.jobHistory,
-              [res]: jobInfo
-            }
-          })
-        },
-        err => {
-          console.log(err)
+          console.log(res)
         }
+      )
+    }
+  }
+
+  addJobToHistory(jobInfo) {
+    jobInfo.state = this.state.activeState
+    initiateJob(
+      {
+        plans: jobInfo.plans,
+        populationVariance: jobInfo.populationVariance,
+        compactness: jobInfo.compactness.toUpperCase(),
+        state: jobInfo.state.toUpperCase(),
+        isLocal: jobInfo.server === 'Local',
+        demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
+      },
+      res => {
+        jobInfo.id = res
+        this.setState({
+          jobLabelContent: `Job #${res} has been started.`,
+          jobHistory: {
+            ...this.state.jobHistory,
+            [res]: jobInfo
+          }
+        })
+      },
+      err => {
+        console.log(err)
+      }
     )
   }
 
@@ -118,7 +131,7 @@ class BiasMap extends Component {
     this.setState({
       hoveredPrecinct: precinct ? precinct + ' - ' + county : "No precinct hovered.",
       demographicContent: precinct ? [
-      `Whole: VAP: ${stats[0]}, POP: ${stats[1]}`,
+      `Total: VAP: ${stats[0]}, POP: ${stats[1]}`,
       `White: VAP: ${stats[2]}, POP: ${stats[3]} `,
       `Hispanic: VAP: ${stats[4]}, POP: ${stats[5]} `,
       `Black: VAP: ${stats[6]}, POP: ${stats[7]} `,
@@ -158,19 +171,22 @@ class BiasMap extends Component {
         }
       )
     }
+    else {
+      this.setVisibility('precinct', true)
+    }
   }
 
   setActiveState(state) {
-    console.log(state)
+    this.setVisibility('precinct', false)
     this.map.fitBounds(this.stateBounds[state])
-    console.log(this.map.getCenter())
     if (state in this.stateAdjustments){
-      setTimeout(() => this.map.setView([this.map.getCenter().lat + this.stateAdjustments[state][0], this.map.getCenter().lng + this.stateAdjustments[state][1]]), 350)
+      setTimeout(() => this.map.setView([this.map.getCenter().lat + this.stateAdjustments[state][0], this.map.getCenter().lng 
+      + this.stateAdjustments[state][1]]), 350)
     }
-    this.setPrecinctData(state)
     this.setState({
       activeState: state
     })
+    this.setPrecinctData(state)
   }
 
   render() {
@@ -243,15 +259,19 @@ class BiasMap extends Component {
             }
             {
               this.state.visibility.precinct ?
-              Object.keys(this.state.precinct_geojsons).map(state => {
-                return (
-                  <Precinct 
-                    key={state}
-                    showDemographics={this.showDemographics}
-                    data={this.state.precinct_geojsons[state]}
-                  />
-                )
-              })
+              (
+                <Precinct 
+                  key={this.state.activeState}
+                  showDemographics={this.showDemographics}
+                  data={this.state.precinct_geojsons[this.state.activeState]}
+                />
+              )
+              :
+              null
+            }
+            {
+              this.state.visibility.random ? 
+              <JobDistrict />
               :
               null
             }

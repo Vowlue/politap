@@ -1,7 +1,41 @@
-import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Popup } from 'semantic-ui-react'
+import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Popup, Accordion } from 'semantic-ui-react'
 import Plot from 'react-plotly.js'
 
 function HistoryTab(props) {
+  const panels = [
+    {
+      key: 'more-options',
+      title: 'More Options',
+      content: {
+        content: (<div>
+          <Popup trigger={<Button color='teal' content='Box Plot' />}>
+            <Popup.Content>
+              <Plot
+                  data={[
+                    {
+                      x: [1, 2, 3,4,5,6,7,8,9],
+                      type: 'box',
+                      marker: {color: 'red'},
+                    }
+                  ]}
+                  layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
+                />
+            </Popup.Content>
+          </Popup>
+          <div>Districts</div>
+          <Button 
+            basic={!props.visibility.random} 
+            onClick={() => {
+                props.setVisibility('random', !props.visibility.random)
+            }}
+            content="Random"
+          />
+          <Button>Random</Button>
+          <Button>Average</Button>
+          <Button>Extreme</Button>
+          </div>)}
+    }
+  ]
   const renderHistory = jobInfo => {
     return (
       <Segment key={jobInfo.id}>
@@ -57,20 +91,7 @@ function HistoryTab(props) {
         </Grid>
         <br />
         <Button color='red'>Cancel Job</Button>
-        <Popup trigger={<Button color='teal' content='Box Plot' />}>
-          <Popup.Content>
-            <Plot
-                data={[
-                  {
-                    x: [1, 2, 3,4,5,6,7,8,9],
-                    type: 'box',
-                    marker: {color: 'red'},
-                  }
-                ]}
-                layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
-              />
-          </Popup.Content>
-        </Popup>
+        <Accordion defaultActiveIndex={-1} panels={panels} />
       </Segment>
     )
   }
