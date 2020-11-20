@@ -110,6 +110,8 @@ function HistoryTab(props) {
           jobInfo.status === "Done" ? 
           <Accordion defaultActiveIndex={-1} panels={panels} />
           :
+          jobInfo.status === "Canceled" ? null
+          :
           <div>Loading options...</div>
         }
       </Segment>

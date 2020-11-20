@@ -15,4 +15,6 @@ const stringifyNumber = num => {
     return arrayNumber.reverse().join("")
 }
 
-export { convertEnumToString, stringifyNumber }
+const getJavaState = state => state.toUpperCase().replace(" ", "_")
+
+export { convertEnumToString, stringifyNumber, getJavaState }

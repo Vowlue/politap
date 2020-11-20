@@ -18,7 +18,7 @@ import { Sidebar } from './js/components/ui/sidebar.js'
 import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
-import { convertEnumToString, stringifyNumber } from './js/helpers/stringHelper.js'
+import { convertEnumToString, stringifyNumber, getJavaState } from './js/helpers/stringHelper.js'
 import { deleteJob, initiateJob, getStateData, getDistrictings, cancelJob } from './js/apis/axios.js'
 import { JobDistrict } from './js/components/geojson/jobdistrict.js'
 
@@ -117,7 +117,7 @@ class BiasMap extends Component {
         plans: jobInfo.plans,
         populationVariance: jobInfo.populationVariance,
         compactness: jobInfo.compactness.toUpperCase(),
-        state: jobInfo.state.toUpperCase(),
+        state: getJavaState(jobInfo.state),
         isLocal: jobInfo.server === 'Local',
         demographic: jobInfo.groups.map(group => group.toUpperCase().replaceAll(" ", "_"))
       },
@@ -181,14 +181,10 @@ class BiasMap extends Component {
     this.stateBounds[state] = bounds
   }
 
-  getJavaState(state) {
-    return state.toUpperCase().replace(" ", "_")
-  }
-
   setPrecinctData(state) {
     if (!(state in this.state.precinct_geojsons)) {
       getStateData(
-        { state: this.getJavaState(state) },
+        { state: getJavaState(state) },
         res => {
           this.setState({
             precinct_geojsons: {
@@ -329,7 +325,7 @@ class BiasMap extends Component {
                   <Button 
                     onClick={() => this.map.setView(this.state.position, this.state.zoom)} 
                     icon='expand'
-                    color='instagram'
+                    color='blue'
                   >
                   </Button>
                 </div>
