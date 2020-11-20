@@ -91,11 +91,10 @@ function HistoryTab(props) {
         </Grid>
         <br />
         {
-          jobInfo.status === "Initialized" ? 
+          jobInfo.status !== "Running" ?
           <Button color='red' basic >Cancel Job</Button>
           :
           <Button color='red' onClick={() => props.cancelJob(jobInfo.id)}>Cancel Job</Button>
-
         }
         {
           jobInfo.status === "Done" ? 
