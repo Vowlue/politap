@@ -7,7 +7,7 @@ function FilterTab(props) {
             <Header textAlign='center' as='h2'>
               Map View Filter
               <Header.Subheader>
-              Toggle map views on and off.
+              Toggle map views filters on/off.
               </Header.Subheader>
             </Header>
           </Message>
@@ -31,7 +31,7 @@ function FilterTab(props) {
             </List.Item>
             <List.Item>
             <Button
-              color='green' 
+              color='black' 
               basic={!props.visibility.precinct} 
               content='Precincts' 
               size='large'

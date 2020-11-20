@@ -4,8 +4,8 @@ function Precinct(props) {
   return (
     <GeoJSON
       style={() => ({
-        color: '#003b11',
-        weight: 0.3,
+        color: '#212121',
+        weight: 0.4,
         fillOpacity: 0,
       })}
       data={props.data.features} 

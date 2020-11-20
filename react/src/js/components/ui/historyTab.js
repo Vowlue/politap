@@ -1,5 +1,6 @@
 import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Popup, Accordion } from 'semantic-ui-react'
 import Plot from 'react-plotly.js'
+import { stringifyNumber } from '../../helpers/stringHelper.js'
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
@@ -23,7 +24,7 @@ function HistoryTab(props) {
                   />
               </Popup.Content>
             </Popup>
-            <div>Districts</div>
+            <Header textAlign='center' as='div' size='small'>Job Districts</Header>
             <Button 
               color='red'
               basic={!props.visibility.random} 
@@ -50,7 +51,7 @@ function HistoryTab(props) {
     return (
       <Segment key={jobInfo.id}>
         <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='right'></Label>
-        <Header textAlign='center' as='h4'>
+        <Header textAlign='center' as='h3'>
           {`Job #${jobInfo.id}`}
           <Header.Subheader>
               <Label color='black' size='large'>
@@ -71,12 +72,12 @@ function HistoryTab(props) {
             <Grid.Column>
               <Label size='large' color='teal' basic >
               Plans:
-                <Label.Detail content={jobInfo.plans}>
+                <Label.Detail content={stringifyNumber(jobInfo.plans)}>
                 </Label.Detail>
               </Label>
               <Label size='large' color='teal' basic >
               Population Variance:
-                <Label.Detail content={jobInfo.populationVariance}>
+                <Label.Detail content={stringifyNumber(jobInfo.populationVariance)}>
                 </Label.Detail>
               </Label>
               <Label  size='large' color='teal' basic >
@@ -108,7 +109,7 @@ function HistoryTab(props) {
         }
         {
           jobInfo.status === "Done" ? 
-          <Accordion defaultActiveIndex={-1} panels={panels} />
+          <Accordion defaultActiveIndex={props.defaultIndex} panels={panels} />
           :
           jobInfo.status === "Canceled" ? null
           :
