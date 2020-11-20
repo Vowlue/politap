@@ -25,6 +25,7 @@ public class RestServerController {
 	private StateManager stateManager;
 
 	private States currentState;
+	private int idCounter = 1;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
 	public JSONObject getStateData(@RequestBody GenericRequest req) {
@@ -42,7 +43,8 @@ public class RestServerController {
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
 		GenericResponse res = new GenericResponse();
-		res.setID(jobManager.createJob(jobInfo));
+		jobManager.createJob(jobInfo,idCounter);
+		res.setID(idCounter++);
 		return res;
 	}
 

@@ -19,12 +19,12 @@ import org.springframework.scheduling.annotation.Async;
 public class JobManager {
 
     private Map<Integer, Job> jobs;
-    private int idCounter = 1;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    public int createJob(JobInfo jobInfo) {
+    @Async("threadPoolTaskExecutor")
+    public void createJob(JobInfo jobInfo, int idCounter) {
         System.out.println(jobInfo.toString());
         Job job = new Job(jobInfo, idCounter);
         jobs.put(idCounter, job);
@@ -33,10 +33,8 @@ public class JobManager {
         } else {
             runSeawulfProcess(job);
         }
-        return idCounter++;
     }
 
-    @Async("threadPoolTaskExecutor")
     private void runLocalProcess(Job job) {
         String stateName = job.getJobInfo().getState().toString();
         int jobID = job.getJobID();
@@ -62,7 +60,6 @@ public class JobManager {
         }
     }
 
-    @Async("threadPoolTaskExecutor")
     private void runSeawulfProcess(Job job){
         //implement later
     }
