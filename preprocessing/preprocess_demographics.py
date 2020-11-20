@@ -2,9 +2,6 @@ import json
 
 precincts = {}
 
-#Dictionary for Census Code to Population combination {race code: [races]}
-race_code = {}
-
 state = input('Please enter a State: ')
 
 def parseTable(file,pop_vap):
@@ -35,19 +32,24 @@ def parseTable(file,pop_vap):
         else:
             precincts[tablerow[0].split("US")[1]]['vap'] = demographics
 
+#Dictionary for Census Code to Population combination {race code: [races]}
+race_code = {}
 
-with open('censusColumnsMetaData.csv') as censusCode:
-
-    for line in censusCode:
+def parseMetaData(file):
+    for line in file:
         code_demographic = line.split(",")
         race = code_demographic[1].split('!!')[-1].strip()
         code = code_demographic[0]
         if " alone" in race:
-            race_code[code] = [race[:-6]]
-            race_code[code[0:3]+'4'+code[4:]] = [race[:-6]]
+            race_code[code] = [race.replace(' alone','')]
         else:
             race_code[code] = race.split("; ")
-            race_code[code[0:3]+'4'+code[4:]] = race.split("; ")
+
+with open('censusPOPMetaData.csv') as censusCode:
+    parseMetaData(censusCode)
+
+with open('censusVAPMetaData.csv') as censusCode:
+    parseMetaData(censusCode)
 
 with open(state+'/'+state+'_POP.csv') as censusPopulation:
     parseTable(censusPopulation,'pop')
@@ -55,32 +57,23 @@ with open(state+'/'+state+'_POP.csv') as censusPopulation:
 with open(state+'/'+state+'_VAP.csv') as censusPopulation:
     parseTable(censusPopulation,'vap')
 
-
 with open(state+'/'+state+'_map.json') as precinctmap:
     geomap = json.load(precinctmap)
+    
     for precinct in geomap["features"]:
         precinctproperty = precinct["properties"]
-        del precinctproperty['VTDI10']
-        del precinctproperty['LSAD10']
-        del precinctproperty['MTFCC10']
-        del precinctproperty['FUNCSTAT10']
-        del precinctproperty['ALAND10']
-        del precinctproperty['AWATER10']
-        del precinctproperty['INTPTLAT10']
-        del precinctproperty['INTPTLON10']
         geoid = precinctproperty['STATEFP10'] + precinctproperty['COUNTYFP10'] + '0'*(6-len(precinctproperty['VTDST10']))+precinctproperty['VTDST10']
         precinctinfo = precincts[geoid]  
-        precinctproperty['GEOID'] = geoid
-        precinctproperty['COUNTY'] = precinctinfo['county']
+        newproperties = {}
+        newproperties['GEOID'] = geoid
+        newproperties['COUNTY'] = precinctinfo['county']
+        newproperties['NAME'] = precinctproperty['NAMELSAD10']
         for demo in precinctinfo['demographics']:
-            precinctproperty[demo] = precinctinfo['demographics'][demo]
+            newproperties[demo] = precinctinfo['demographics'][demo]
         for vap in precinctinfo['vap']:
-            precinctproperty[vap+' VAP'] = precinctinfo['vap'][vap]
-        del precinctproperty['COUNTYFP10']
-        del precinctproperty['STATEFP10']
-        del precinctproperty['VTDST10']
-        del precinctproperty['GEOID10']
+            newproperties[vap+' VAP'] = precinctinfo['vap'][vap]
+        precinct['properties'] = newproperties
     with open(state+"_Precinct.json",'w') as outfile:
         json.dump(geomap,outfile)
         
-print('finished')
+print('finished demographics')
