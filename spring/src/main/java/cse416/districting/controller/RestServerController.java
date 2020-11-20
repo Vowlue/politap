@@ -8,6 +8,7 @@ import cse416.districting.dto.*;
 import cse416.districting.manager.*;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,53 +25,38 @@ public class RestServerController {
 	private StateManager stateManager;
 
 	private States currentState;
-	private int IDCounter = 1;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
-	public GenericResponse getStateData(@RequestBody GenericRequest req) {
+	public JSONObject getStateData(@RequestBody GenericRequest req) {
 		currentState = req.getState();
-		GenericResponse res = new GenericResponse();
-		res.setJsonObject(stateManager.getDefaultStateInfo(req.getState()));
-		return res;
+		return stateManager.getDefaultStateInfo(currentState);
 	}
 
-	@RequestMapping("/getHeatMap")
-	public GenericResponse getHeatMap(){
-		GenericResponse res = new GenericResponse();
-		res.setJsonObject(stateManager.getStateHeatMap(currentState));
-		return res;
-	}
+	//@RequestMapping("/getHeatMap")
+	//public GenericResponse getHeatMap(){
+	//	GenericResponse res = new GenericResponse();
+	//	res.setJsonObject(stateManager.getStateHeatMap(currentState));
+	//	return res;
+	//}
 
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
-		jobManager.createJob(jobInfo, IDCounter);
 		GenericResponse res = new GenericResponse();
-		res.setID(IDCounter);
-		IDCounter++;
+		res.setID(jobManager.createJob(jobInfo));
 		return res;
 	}
 
 	@PostMapping(value="/cancelJob", consumes = "application/json")
 	public GenericResponse cancelJob(@RequestBody GenericRequest req) {
 		GenericResponse res = new GenericResponse();
-		if (!jobManager.cancelJob(req.getID())){
-			res.setError(true);
-			res.setErrorMessage("ID not found");
-			return res;
-		}
-		res.setError(false);
+		res.setSuccess(jobManager.cancelJob(req.getID()));	
 		return res;
 	}
 
 	@PostMapping(value="/deleteJob", consumes = "application/json")
 	public GenericResponse deleteJob(@RequestBody GenericRequest req) {
 		GenericResponse res = new GenericResponse();
-		if (!jobManager.deleteJob(req.getID())){
-			res.setError(true);
-			res.setErrorMessage("ID not found");
-			return res;
-		}
-		res.setError(false);
+		res.setSuccess(jobManager.deleteJob(req.getID()));
 		return res;
 	}
 
@@ -78,25 +64,13 @@ public class RestServerController {
 	public GenericResponse checkJob(@RequestBody GenericRequest req) {
 		GenericResponse res = new GenericResponse();
 		JobStatus status = jobManager.jobStatus(req.getID());
-		if (status == JobStatus.ERROR){
-			res.setError(true);
-			res.setErrorMessage("ID not found");
-			return res;
-		}
 		res.setJobStatus(status);
 		return res;
 	}
 
-	@PostMapping(value="/getDistrictingByJobID", consumes = "application/json")
-	public GenericResponse getDistrictingByJobID(@RequestBody GenericRequest req) {
-		GenericResponse res = new GenericResponse();
+	@PostMapping(value="/getDistrictings", consumes = "application/json")
+	public JSONObject[] getDistrictings(@RequestBody GenericRequest req) {
 		String filename = jobManager.getDistrictingFile(req.getID());
-		if (filename == null){
-			res.setError(true);
-			res.setErrorMessage("ID not found");
-			return res;
-		}
-		res.setJsonObject(stateManager.getDistrictingFile(filename));
-		return res;
+		return stateManager.getDistrictingFile(filename);
 	}
 }

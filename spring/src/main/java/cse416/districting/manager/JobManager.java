@@ -4,10 +4,10 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
-import cse416.districting.model.JobResults;
 import lombok.Setter;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 
@@ -19,50 +19,50 @@ import org.springframework.scheduling.annotation.Async;
 public class JobManager {
 
     private Map<Integer, Job> jobs;
+    private int idCounter = 1;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    @Async("threadPoolTaskExecutor")
-    public void createJob(JobInfo jobInfo, int IDCounter) {
+    public int createJob(JobInfo jobInfo) {
         System.out.println(jobInfo.toString());
-        Job job = new Job(jobInfo, IDCounter);
-        jobs.put(IDCounter, job);
-        if (jobInfo.isLocal()) runLocalProcess(job);
-        else runSeawulfProcess(job);
+        Job job = new Job(jobInfo, idCounter);
+        jobs.put(idCounter, job);
+        idCounter++;
+        if (jobInfo.isLocal()) {
+            runLocalProcess(job);
+        } else {
+            runSeawulfProcess(job);
+        }
+        return idCounter;
     }
 
-    private void runLocalProcess(Job job){
+    @Async("threadPoolTaskExecutor")
+    private void runLocalProcess(Job job) {
         String stateName = job.getJobInfo().getState().toString();
         int jobID = job.getJobID();
-        ProcessBuilder processBuilder = new ProcessBuilder("py", 
-                                                           "spring/src/main/resources/script/testscript.py", 
-                                                           stateName, 
-                                                           Integer.toString(jobID));
+        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/testscript.py",
+                stateName, Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
             Process process = processBuilder.start();
             sendMessage(JobStatus.RUNNING, jobID);
             job.setProcess(process);
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
-            String s = reader.readLine();
+            String output = reader.readLine();
             System.out.println("Script output:");
-            System.out.println(s);
+            System.out.println(output);
 
-            JobResults jr = new JobResults();
-            jr.setFilename(s);
-            job.setJobResults(jr);
-            //do something with result
-            //------------------------
+            job.setFilename(output);
             sendMessage(JobStatus.DONE, jobID);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Async("threadPoolTaskExecutor")
     private void runSeawulfProcess(Job job){
         //implement later
     }
@@ -75,13 +75,11 @@ public class JobManager {
     }
 
     public boolean cancelJob(int ID){
-        if (!jobs.containsKey(ID)) return false;
         jobs.get(ID).cancel();
         return true;
     }
 
     public boolean deleteJob(int ID){
-        if (!jobs.containsKey(ID)) return false;
         jobs.remove(ID);
         return true;
     }
@@ -93,7 +91,6 @@ public class JobManager {
     }
 
     public String getDistrictingFile(int ID){
-        if (!jobs.containsKey(ID)) return null;
-        return jobs.get(ID).getJobResults().getFilename();
+        return jobs.get(ID).getFilename();
     }
 }

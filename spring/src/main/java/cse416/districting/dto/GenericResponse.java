@@ -1,7 +1,5 @@
 package cse416.districting.dto;
 
-import org.json.simple.JSONObject;
-
 import cse416.districting.Enums.JobStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,9 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class GenericResponse {
-    private String errorMessage;
-    private boolean error;
     private int ID;
     private JobStatus jobStatus;
-    private JSONObject jsonObject;
+    private boolean success;
 }
