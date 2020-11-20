@@ -55,23 +55,21 @@ public class StateManager {
         return data;
     }
 
-    public JSONObject[] getDistrictingFile(String filename){
-        Resource resource = new ClassPathResource("json/generatedDistrictings/" + filename + ".geojson");
-        Resource resource2 = new ClassPathResource("json/generatedDistrictings/" + filename + "2.geojson");
+    public JSONObject getDistrictingFile(String filename){
+        Resource resource = new ClassPathResource("json/generatedDistrictings/" + filename);
         Object obj;
-        Object obj2;
         JSONParser parser = new JSONParser();
         try {
             obj = parser.parse(new InputStreamReader(resource.getInputStream()));
             JSONObject jsonObject = (JSONObject) obj;
-            obj2 = parser.parse(new InputStreamReader(resource2.getInputStream()));
-            JSONObject jsonObject2 = (JSONObject) obj2;
             //If successful return object
-            JSONObject[] ret = {jsonObject,jsonObject2};
-            return ret;
+            return jsonObject;
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
-        return null;
+        //If failed, return error
+        HashMap<String,String> hm = new HashMap<>();
+        hm.put("error", "getDistrictingFile() from StateManager failed");
+        return new JSONObject(hm);
     }
 }

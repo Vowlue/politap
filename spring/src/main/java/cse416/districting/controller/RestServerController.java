@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class RestServerController {
 	
@@ -73,6 +73,8 @@ public class RestServerController {
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
 	public JSONObject[] getDistrictings(@RequestBody GenericRequest req) {
 		String filename = jobManager.getDistrictingFile(req.getID());
-		return stateManager.getDistrictingFile(filename);
+		JSONObject[] ret = {stateManager.getDistrictingFile(filename),
+			stateManager.getDistrictingFile(filename+"-2")};
+		return ret;
 	}
 }

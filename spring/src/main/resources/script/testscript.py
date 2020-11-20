@@ -55,7 +55,7 @@ def main(argv):
     df1 = df1.dissolve(by='DISTRICTID')
     df1.to_file(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.geojson', driver='GeoJSON')
     df2 = df2.dissolve(by='DISTRICTID2')
-    df2.to_file(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '2.geojson', driver='GeoJSON')
+    df2.to_file(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '-2.geojson', driver='GeoJSON')
 
     time.sleep(2)
     print(str(state)[1:] + str(jobid))
