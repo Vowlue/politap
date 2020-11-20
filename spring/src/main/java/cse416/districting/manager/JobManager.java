@@ -28,13 +28,12 @@ public class JobManager {
         System.out.println(jobInfo.toString());
         Job job = new Job(jobInfo, idCounter);
         jobs.put(idCounter, job);
-        idCounter++;
         if (jobInfo.isLocal()) {
             runLocalProcess(job);
         } else {
             runSeawulfProcess(job);
         }
-        return idCounter;
+        return idCounter++;
     }
 
     @Async("threadPoolTaskExecutor")
@@ -48,6 +47,7 @@ public class JobManager {
             Thread.sleep(3000);
             Process process = processBuilder.start();
             sendMessage(JobStatus.RUNNING, jobID);
+
             job.setProcess(process);
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
