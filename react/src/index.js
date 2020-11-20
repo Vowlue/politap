@@ -36,11 +36,13 @@ class BiasMap extends Component {
         state: true,
         district: true,
         precinct: false,
-        random: false
+        random: false,
+        random2: false
       },
       jobHistory: {},
       precinct_geojsons: {},
-      jobLabelContent: "No job has been started yet."
+      jobLabelContent: "No job has been started yet.",
+      currentJobId: 0
     }
 
     //bindings
@@ -52,10 +54,17 @@ class BiasMap extends Component {
     this.removeJobFromHistory = this.removeJobFromHistory.bind(this)
     this.modifyJobStatus = this.modifyJobStatus.bind(this)
     this.cancelHistoryJob = this.cancelHistoryJob.bind(this)
+    this.setCurrentJobId = this.setCurrentJobId.bind(this)
 
     this.stateBounds = []
     this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.35, 0]}
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
+  }
+
+  setCurrentJobId(id) {
+    this.setState({
+      currentJobId: id
+    })
   }
 
   cancelHistoryJob(id) {
@@ -86,7 +95,10 @@ class BiasMap extends Component {
             id: id
           },
           res => {
-            newJobHistory.jobDistricts = res
+            newJobHistory[id].jobDistricts = res
+            this.setState({
+              jobHistory: newJobHistory
+            })
           }
         )
       }
@@ -227,6 +239,7 @@ class BiasMap extends Component {
           visibility={ this.state.visibility }
           jobLabelContent={ this.state.jobLabelContent }
           cancelJob={ this.cancelHistoryJob }
+          setCurrentJobId={this.setCurrentJobId}
         />
         <div id='map'>
           <MapContainer
@@ -292,7 +305,13 @@ class BiasMap extends Component {
             }
             {
               this.state.visibility.random ? 
-              <JobDistrict />
+              <JobDistrict color="#B03060" data={this.state.jobHistory[this.state.currentJobId].jobDistricts.random}/>
+              :
+              null
+            }
+            {
+              this.state.visibility.random2 ? 
+              <JobDistrict color="#016936" data={this.state.jobHistory[this.state.currentJobId].jobDistricts.random2}/>
               :
               null
             }

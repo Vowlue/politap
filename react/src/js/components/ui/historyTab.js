@@ -25,13 +25,23 @@ function HistoryTab(props) {
             </Popup>
             <div>Districts</div>
             <Button 
+              color='red'
               basic={!props.visibility.random} 
               onClick={() => {
-                  props.setVisibility('random', !props.visibility.random)
+                props.setCurrentJobId(jobInfo.id)
+                props.setVisibility('random', !props.visibility.random)
               }}
               content="Random"
             />
-            <Button>Random</Button>
+            <Button 
+              color='green'
+              basic={!props.visibility.random2} 
+              onClick={() => {
+                props.setCurrentJobId(jobInfo.id)
+                props.setVisibility('random2', !props.visibility.random2)
+              }}
+              content="Random"
+            />
             <Button>Average</Button>
             <Button>Extreme</Button>
             </div>)}

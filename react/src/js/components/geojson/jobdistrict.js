@@ -4,10 +4,10 @@ function JobDistrict(props) {
   return (
     <GeoJSON
       style={() => ({
-        color: '#0E6EB8',
-        weight: 1.5,
+        color: props.color,
+        weight: 3,
         fillColor: "#0E6EB8",
-        fillOpacity: 0.1,
+        fillOpacity: 0,
       })}
       data={props.data} 
     />
