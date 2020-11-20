@@ -59,7 +59,7 @@ public class JobManager {
             System.out.println("Script output:");
             System.out.println(output);
 
-            if (output.equals(null)) return;
+            if (output == null) return;
             job.setFilename(output);
             sendMessage(JobStatus.DONE, jobID);
         } catch (InterruptedException | IOException e) {

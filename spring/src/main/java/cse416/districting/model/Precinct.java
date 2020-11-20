@@ -1,19 +1,22 @@
 package cse416.districting.model;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import java.util.List;
+import java.util.Map;
+
+import cse416.districting.Enums.Demographic;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class Precinct {
-    String id;
-    JSONArray coordinates;
-    JSONObject properties;
-
-    public Precinct(String i, JSONArray c, JSONObject p){
-        id = i;
-        coordinates = c;
-        properties = p;
-    }
+    private String id;
+    private String name;
+    private List<Precinct> neighbors;
+    private String county;
+    private Map<Demographic,Long> demo;
+    private Map<Demographic,Long> demoVAP;
+    private long population;
+    private long populationVAP;
 }

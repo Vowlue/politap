@@ -7,12 +7,10 @@ import cse416.districting.Enums.States;
 import cse416.districting.dto.*;
 import cse416.districting.manager.*;
 
-import org.springframework.web.bind.annotation.RequestMapping;
+//import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.print.attribute.standard.JobState;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,21 +25,24 @@ public class RestServerController {
 	@Autowired
 	private JobManager jobManager;
 
+	//@Autowired
+	//private JobResultsManager jobResultsManager;
+
 	@Autowired
-	private StateManager stateManager;
+	private MapManager mapManager;
 
 	private States currentState;
 
 	@PostMapping(value="/getStateData", consumes = "application/json")
 	public JSONObject getStateData(@RequestBody GenericRequest req) {
 		currentState = req.getState();
-		return stateManager.getDefaultStateInfo(currentState);
+		return mapManager.getDefaultStateInfo(currentState);
 	}
 
 	//@RequestMapping("/getHeatMap")
 	//public GenericResponse getHeatMap(){
 	//	GenericResponse res = new GenericResponse();
-	//	res.setJsonObject(stateManager.getStateHeatMap(currentState));
+	//	res.setJsonObject(mapManager.getStateHeatMap(currentState));
 	//	return res;
 	//}
 
@@ -80,8 +81,8 @@ public class RestServerController {
 	public Map<String,JSONObject> getDistrictings(@RequestBody GenericRequest req) {
 		String filename = jobManager.getDistrictingFilename(req.getID());
 		Map<String,JSONObject> map = new HashMap<>();
-		map.put("random", stateManager.getDistrictingFile(filename));
-		map.put("random2", stateManager.getDistrictingFile(filename+"-2"));
+		map.put("random", mapManager.getDistrictingFile(filename));
+		map.put("random2", mapManager.getDistrictingFile(filename+"-2"));
 		return map;
 	}
 }

@@ -24,8 +24,8 @@ public class Config {
     }
 
     @Bean
-    public StateManager stateManager(){
-        return new StateManager();
+    public MapManager mapManager(){
+        return new MapManager();
         
     }
     

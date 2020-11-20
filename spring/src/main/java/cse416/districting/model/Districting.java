@@ -10,9 +10,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class StateObject {
+public class Districting {
+    private int id;
     private States state;
-    private List<Precinct> precincts;
-
-    public void calculateHeatMap(){}
+    private List<District> districts;
 }

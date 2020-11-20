@@ -19,8 +19,6 @@ public class Job {
     
     public void cancel(){
         if(process.isAlive()){
-            System.out.println(Integer.toString(jobID));
-            System.out.println("deleted");
             process.destroyForcibly();
         }
     }

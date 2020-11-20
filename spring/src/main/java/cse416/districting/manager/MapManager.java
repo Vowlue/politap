@@ -11,14 +11,15 @@ import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StateManager {
+public class MapManager {
 
     private Map<States,StateObject> StateList;
 
-    public StateManager(){
+    public MapManager(){
         StateList = new HashMap<>();
     }
 
@@ -34,8 +35,7 @@ public class StateManager {
         try {
             obj = parser.parse(new InputStreamReader(resource.getInputStream()));
             JSONObject jsonObject = (JSONObject) obj;
-            StateObject stateObject = new StateObject(state);
-            stateObject.processData(jsonObject);
+            StateObject stateObject = new StateObject(state, new ArrayList<>());
             StateList.put(state,stateObject);
             //If successful return object
             return jsonObject;
