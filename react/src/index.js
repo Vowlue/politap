@@ -66,7 +66,7 @@ class BiasMap extends Component {
         jobHistory: newJobHistory
       })
     }
-    if (status === 'DONE') {
+    if (status === 'Done') {
       getDistrictings(
         {
           id: id
