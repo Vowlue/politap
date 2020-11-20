@@ -19,7 +19,7 @@ import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
 import { convertEnumToString, stringifyNumber } from './js/helpers/stringHelper.js'
-import { deleteJob, initiateJob, getStateData, getDistrictings } from './js/apis/axios.js'
+import { deleteJob, initiateJob, getStateData, getDistrictings, cancelJob } from './js/apis/axios.js'
 import { JobDistrict } from './js/components/geojson/jobdistrict.js'
 
 class BiasMap extends Component {
@@ -40,8 +40,7 @@ class BiasMap extends Component {
       },
       jobHistory: {},
       precinct_geojsons: {},
-      jobLabelContent: "No job has been started yet.",
-      jobDistrictings: {}
+      jobLabelContent: "No job has been started yet."
     }
 
     //bindings
@@ -52,29 +51,50 @@ class BiasMap extends Component {
     this.addJobToHistory = this.addJobToHistory.bind(this)
     this.removeJobFromHistory = this.removeJobFromHistory.bind(this)
     this.modifyJobStatus = this.modifyJobStatus.bind(this)
+    this.cancelHistoryJob = this.cancelHistoryJob.bind(this)
 
     this.stateBounds = []
     this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.35, 0]}
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
   }
 
-  modifyJobStatus(id, status) {
+  cancelHistoryJob(id) {
     if(id in this.state.jobHistory) {
-      let newJobHistory = {...this.state.jobHistory}
-      newJobHistory[id].status = status
-      this.setState({
-        jobHistory: newJobHistory
-      })
-    }
-    if (status === 'Done') {
-      getDistrictings(
+      cancelJob(
         {
           id: id
         },
         res => {
-          console.log(res)
+          if (res) {
+            this.modifyJobStatus(id, 'Canceled')
+          }
+        },
+        err => {
+          console.log(err)
         }
       )
+    }
+  }
+
+  modifyJobStatus(id, status) {
+    if(id in this.state.jobHistory) {
+      let newJobHistory = {...this.state.jobHistory}
+      newJobHistory[id].status = status
+      if (status === 'Done') {
+        getDistrictings(
+          {
+            id: id
+          },
+          res => {
+            newJobHistory.jobDistricts = res
+          }
+        )
+      }
+      else {
+        this.setState({
+          jobHistory: newJobHistory
+        })
+      }
     }
   }
 
@@ -206,6 +226,7 @@ class BiasMap extends Component {
           setVisibility={ this.setVisibility }
           visibility={ this.state.visibility }
           jobLabelContent={ this.state.jobLabelContent }
+          cancelJob={ this.cancelHistoryJob }
         />
         <div id='map'>
           <MapContainer

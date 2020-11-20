@@ -2,41 +2,41 @@ import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Pop
 import Plot from 'react-plotly.js'
 
 function HistoryTab(props) {
-  const panels = [
-    {
-      key: 'more-options',
-      title: 'More Options',
-      content: {
-        content: (<div>
-          <Popup trigger={<Button color='teal' content='Box Plot' />}>
-            <Popup.Content>
-              <Plot
-                  data={[
-                    {
-                      x: [1, 2, 3,4,5,6,7,8,9],
-                      type: 'box',
-                      marker: {color: 'red'},
-                    }
-                  ]}
-                  layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
-                />
-            </Popup.Content>
-          </Popup>
-          <div>Districts</div>
-          <Button 
-            basic={!props.visibility.random} 
-            onClick={() => {
-                props.setVisibility('random', !props.visibility.random)
-            }}
-            content="Random"
-          />
-          <Button>Random</Button>
-          <Button>Average</Button>
-          <Button>Extreme</Button>
-          </div>)}
-    }
-  ]
   const renderHistory = jobInfo => {
+    const panels = [
+      {
+        key: 'more-options',
+        title: 'More Options',
+        content: {
+          content: (<div>
+            <Popup trigger={<Button color='teal' content='Box Plot' />}>
+              <Popup.Content>
+                <Plot
+                    data={[
+                      {
+                        x: [1, 2, 3,4,5,6,7,8,9],
+                        type: 'box',
+                        marker: {color: 'red'},
+                      }
+                    ]}
+                    layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
+                  />
+              </Popup.Content>
+            </Popup>
+            <div>Districts</div>
+            <Button 
+              basic={!props.visibility.random} 
+              onClick={() => {
+                  props.setVisibility('random', !props.visibility.random)
+              }}
+              content="Random"
+            />
+            <Button>Random</Button>
+            <Button>Average</Button>
+            <Button>Extreme</Button>
+            </div>)}
+      }
+    ]
     return (
       <Segment key={jobInfo.id}>
         <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='right'></Label>
@@ -90,8 +90,13 @@ function HistoryTab(props) {
           </Grid.Row>
         </Grid>
         <br />
-        <Button color='red'>Cancel Job</Button>
-        <Accordion defaultActiveIndex={-1} panels={panels} />
+        <Button color='red' onClick={props.cancelJob(jobInfo.id)}>Cancel Job</Button>
+        {
+          jobInfo.status === "Done" ? 
+          <Accordion defaultActiveIndex={-1} panels={panels} />
+          :
+          <div>Loading options...</div>
+        }
       </Segment>
     )
   }
