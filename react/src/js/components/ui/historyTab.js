@@ -90,7 +90,13 @@ function HistoryTab(props) {
           </Grid.Row>
         </Grid>
         <br />
-        <Button color='red' onClick={props.cancelJob(jobInfo.id)}>Cancel Job</Button>
+        {
+          jobInfo.status === "Initialized" ? 
+          <Button color='red' basic >Cancel Job</Button>
+          :
+          <Button color='red' onClick={() => props.cancelJob(jobInfo.id)}>Cancel Job</Button>
+
+        }
         {
           jobInfo.status === "Done" ? 
           <Accordion defaultActiveIndex={-1} panels={panels} />
