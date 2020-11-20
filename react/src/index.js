@@ -13,6 +13,7 @@ import { districtSCGeoJSON } from './data/districtSCGeoJSON.js'
 import { State } from './js/components/geojson/state.js'
 import { District } from './js/components/geojson/district.js'
 import { Precinct } from './js/components/geojson/precinct.js'
+import { JobDistrict } from './js/components/geojson/jobdistrict.js'
 import { Sidebar } from './js/components/ui/sidebar.js'
 
 import './css/index.css'
@@ -20,7 +21,6 @@ import 'semantic-ui-css/semantic.min.css'
 
 import { convertEnumToString, stringifyNumber, getJavaState } from './js/helpers/stringHelper.js'
 import { deleteJob, initiateJob, getStateData, getDistrictings, cancelJob } from './js/apis/axios.js'
-import { JobDistrict } from './js/components/geojson/jobdistrict.js'
 
 class BiasMap extends Component {
   constructor(props) {
@@ -45,7 +45,6 @@ class BiasMap extends Component {
       currentJobId: 0
     }
 
-    //bindings
     this.showDemographics = this.showDemographics.bind(this)
     this.setStateBounds = this.setStateBounds.bind(this)
     this.setActiveState = this.setActiveState.bind(this)
