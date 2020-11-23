@@ -1,0 +1,17 @@
+{"precincts":[
+    { "id":"1", "neighbors":["2","3","5","6"], "totalPopulation":1001 },
+    { "id":"2", "neighbors":["1","4"], "totalPopulation":1002 },
+    { "id":"3", "neighbors":["1","4","5","9"], "totalPopulation":1003 },
+    { "id":"4", "neighbors":["2","3","9","13"], "totalPopulation":1004 },
+    { "id":"5", "neighbors":["1","3","6","10"], "totalPopulation":1005 },
+    { "id":"6", "neighbors":["1","5","10","11","8","7"], "totalPopulation":1006 },
+    { "id":"7", "neighbors":["6","8"], "totalPopulation":1007 },
+    { "id":"8", "neighbors":["6","7","11","15"], "totalPopulation":1008 },
+    { "id":"9", "neighbors":["3","4","10","12"], "totalPopulation":1009 },
+    { "id":"10", "neighbors":["5","9","6","11"], "totalPopulation":1010 },
+    { "id":"11", "neighbors":["6","8","10","12","14","15"], "totalPopulation":1011 },
+    { "id":"12", "neighbors":["9","11","13"], "totalPopulation": 1012},
+    { "id":"13", "neighbors":["4","12"], "totalPopulation":1013 },
+    { "id":"14", "neighbors":["11","15"], "totalPopulation":1014 },
+    { "id":"15", "neighbors":["8","11","14"], "totalPopulation":1015 }
+]}
