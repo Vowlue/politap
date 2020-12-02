@@ -2,10 +2,12 @@ package cse416.districting.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import cse416.districting.Enums.Demographic;
 import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
 import cse416.districting.dto.*;
 import cse416.districting.manager.*;
+import cse416.districting.model.Precinct;
 
 //import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -39,12 +42,15 @@ public class RestServerController {
 		return mapManager.getDefaultStateInfo(currentState);
 	}
 
-	//@RequestMapping("/getHeatMap")
-	//public GenericResponse getHeatMap(){
-	//	GenericResponse res = new GenericResponse();
-	//	res.setJsonObject(mapManager.getStateHeatMap(currentState));
-	//	return res;
-	//}
+	@RequestMapping("/getHeatMap")
+	public Map<String,Map<Demographic,Integer>> getHeatMap(){
+		return mapManager.getStateHeatMap(currentState);
+	}
+
+	@RequestMapping("/getHeatMapVap")
+	public Map<String,Map<Demographic,Integer>> getHeatMapVap(){
+		return mapManager.getStateHeatMapVap(currentState);
+	}
 
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
