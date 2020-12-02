@@ -42,6 +42,11 @@ public class RestServerController {
 		return mapManager.getDefaultStateInfo(currentState);
 	}
 
+	@PostMapping(value="/setState", consumes = "application/json")
+	public void setState(@RequestBody GenericRequest req) {
+		currentState = req.getState();
+	}
+
 	@RequestMapping("/getHeatMap")
 	public Map<String,Map<Demographic,Integer>> getHeatMap(){
 		return mapManager.getStateHeatMap(currentState);
