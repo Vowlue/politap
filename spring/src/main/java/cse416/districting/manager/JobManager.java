@@ -4,6 +4,8 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.Job;
+import cse416.districting.model.JobInfoModel;
+import cse416.districting.repository.JobInfoRepository;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +13,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
+
+import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -26,11 +30,20 @@ public class JobManager {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    @Autowired
+    private JobInfoRepository jobInfoRepository;
+
+    @PostConstruct
+    public void init(){
+        jobInfoRepository.deleteAll();
+    }
+
     @Async("threadPoolTaskExecutor")
     public void createJob(JobInfo jobInfo) {
         System.out.println(jobInfo.toString());
         Job job = new Job(jobInfo, idCounter);
         jobs.put(idCounter, job);
+        jobInfoRepository.save(new JobInfoModel(idCounter,jobInfo));
         idCounter++;
         if (jobInfo.isLocal()) {
             runLocalProcess(job);

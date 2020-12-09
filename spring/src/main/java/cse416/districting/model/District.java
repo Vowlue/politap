@@ -19,7 +19,7 @@ public class District {
     public void countCounties(){
         Set<String> set = new HashSet<>();
         for (Precinct precinct : precincts){
-            set.add(precinct.getCounty());
+            set.add("nothing");
         }
         countyCount = set.size();
     }

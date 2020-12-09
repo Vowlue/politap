@@ -1,11 +1,16 @@
 package cse416.districting.manager;
 
+import cse416.districting.Enums;
+import cse416.districting.Enums.Demographic;
 import cse416.districting.Enums.States;
+import cse416.districting.model.Precinct;
 import cse416.districting.model.StateObject;
+import cse416.districting.repository.PrecinctRepository;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -18,6 +23,9 @@ import java.util.Map;
 public class MapManager {
 
     private Map<States,StateObject> StateList;
+
+    @Autowired
+    private PrecinctRepository precinctRepository;
 
     public MapManager(){
         StateList = new HashMap<>();
@@ -50,9 +58,22 @@ public class MapManager {
         return new JSONObject(hm);
     }
 
-    public JSONObject getStateHeatMap(States state){
-        JSONObject data = new JSONObject();
-        return data;
+    public Map<String,Map<Demographic,Integer>> getStateHeatMap(States state){
+        state = States.VIRGINIA;
+        Map<String,Map<Demographic,Integer>> ret = new HashMap<String,Map<Demographic,Integer>>();
+        for (Precinct p : precinctRepository.findByState(Enums.getStateShortcut(state))){
+            ret.put(p.getGeoid(), p.getPopulationData());
+        }
+        return ret;
+    }
+
+    public Map<String,Map<Demographic,Integer>> getStateHeatMapVap(States state){
+        state = States.VIRGINIA;
+        Map<String,Map<Demographic,Integer>> ret = new HashMap<String,Map<Demographic,Integer>>();
+        for (Precinct p : precinctRepository.findByState(Enums.getStateShortcut(state))){
+            ret.put(p.getGeoid(), p.getPopulationDataVAP());
+        }
+        return ret;
     }
 
     public JSONObject getDistrictingFile(String filename){
