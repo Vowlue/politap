@@ -4,18 +4,22 @@ import myconstants
 
 class Precinct: 
     def __init__(self, precinctDict: dict): 
-        self.__precinctID = precinctDict[myconstants.PRECINCT_ID] # GEOID identifier
-        self.__precinctNeighborsList = precinctDict[myconstants.PRECINCT_NEIGHBORS_LIST] # list of nums from json to be converted into precinct object references
+        # self.__precinctID = precinctDict[myconstants.PRECINCT_ID] # GEOID identifier
+        self.__precinctID = ""
+        self.__precinctNeighbors = set(precinctDict[myconstants.PRECINCT_NEIGHBORS_LIST].keys()) # list of nums from json to be converted into precinct object references
         self.__precinctPopulation = precinctDict[myconstants.PRECINCT_POPULATION] # population of precinct
 
     def getPrecinctID(self): 
         return self.__precinctID
 
-    def getPrecinctNeighborsList(self): 
-        return self.__precinctNeighborsList
+    def setPrecinctID(self, id:str):
+        self.__precinctID = id
 
-    def setPrecinctNeighborsList(self, lst: list):
-        self.__precinctNeighborsList = lst
+    def getPrecinctNeighbors(self): 
+        return self.__precinctNeighbors
+
+    def setPrecinctNeighbors(self, lst: set):
+        self.__precinctNeighbors = lst
 
     def getPrecinctPopulation(self): 
         return self.__precinctPopulation

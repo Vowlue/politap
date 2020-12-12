@@ -5,10 +5,11 @@ import myconstants
 class Cluster:
     # default precinct=None so we can instantiate empty clusters
     def __init__(self, precinct=None):
+        self.__neighborsList = []
         if precinct is not None:
             self.__clusterID = precinct.getPrecinctID()
             self.__precinctList = [precinct]
-            self.__neighborsList = precinct.getPrecinctNeighborsList() 
+            self.__neighborsList = precinct.getPrecinctNeighbors() 
         self.acceptable = False
         self.edgeList = [] # list of tuples
     
