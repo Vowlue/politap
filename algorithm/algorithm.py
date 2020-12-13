@@ -4,6 +4,7 @@ import random
 import networkx as nx
 import copy
 import sys
+import time
 
 # self made imports
 import myconstants
@@ -11,25 +12,8 @@ from precinct import Precinct
 from cluster import Cluster
 
 # simluate algo params/job params
-idealPopulation = 3000
-populationVariance = 0.3 
-numIterations = 1000
+numIterations = 20
 requestedNumDistricts = 4
-compactness = '' 
-
-# todo
-# figure out compactness 
-# take the inputs for vars - how to represent demographics?
-# test on real data
-# any debug?
-# integrity checks at the stages *********** 
-# clean up code 
-# test on other 3 sets of data
-# restore loop 
-# get all command args 
-# get ricky a test json copy
-# how tf does ethnic group factor into our plans?
-
 
 globalPrecinctDict = {}
 globalClusterList = []
@@ -59,62 +43,6 @@ def addNeighbor(c1: Cluster, c2: Cluster):
     currList.append(c2)
     currList = list(set(currList))
     c1.setClusterNeighborsList(currList)
-
-# merges two clusters for seed districting, updates necessary info within clusters and its neighbors
-def mergeClusters(n1: str, n2: str):
-
-    #newGraph = nx.contracted_nodes(globalNXGraph, n1, n2)
-    #newGraph.nodes[n1]["precinctList"].append(n2)
-
-    #return newGraph
-    '''
-    # merge precincts
-    c1.setClusterPrecinctsList(c1.getClusterPrecinctsList() + c2.getClusterPrecinctsList()) # union of the two cluster's precincts
-    
-    # merge neighbors
-    c1.setClusterID(c1.getClusterPrecinctsList()[0].getPrecinctID()) # set id to first precinct id
-    newNeighborsList = list(set(c1.getClusterNeighborsList() + c2.getClusterNeighborsList())) # combine neighbors list, remove duplicates and themselves
-
-    # account for possible data errors
-    newNeighborsList.append(c1)
-    newNeighborsList.append(c2)
-    newNeighborsList = list(set(newNeighborsList))
-    '''
-    '''
-    print(stringifyList(newNeighborsList))
-    print(newNeighborsList)
-    print(c1 in newNeighborsList)
-    print(c2 in newNeighborsList)
-    print()
-    '''
-    '''
-    newNeighborsList.remove(c1)
-    newNeighborsList.remove(c2)
-    c1.setClusterNeighborsList(newNeighborsList) # combine neighbors while removing duplicates, remove any occurrences of precincts
-    '''
-    # update neighbors - remove merged cluster from neighbors' neighborlist (remove c1 from c2's neighbor list first)
-    #removeNeighbor(c2, c1)
-    #for n in c2.getClusterNeighborsList():
-    '''
-        print(c2.getClusterNeighborsList())
-        print(n.getClusterNeighborsList())
-        print([c2])
-        print([n])
-    '''
-        #print(c2.getClusterID())
-        #print(n.getClusterID())
-        # potentially bugged - unknown if code end or preprocessing end   
-        #if c2 in n.getClusterNeighborsList(): 
-            #removeNeighbor(n, c2) # replace instances of c2 with c1
-            #addNeighbor(n, c1)
-    
-    # remove merged cluster
-    '''
-    print(len(globalClusterList))
-    print(globalClusterList)
-    print([c2])
-    '''
-    #globalClusterList.remove(c2)
 
 # combines two clusters together for uc30
 def combineClusters(n1: str, n2: str):
@@ -209,19 +137,16 @@ def calculateSubgraphPopulation (precinctIDs: set):
     
     return totalPop
 
-# returns boolean based on population and compactness conditions
-def isGraphAcceptable(subgraph: set):
-    populationFlag = False
-    compactnessFlag = True
-    # condition 1: abs(population difference) < user specified population difference 
-    subgraphPopulation = calculateSubgraphPopulation(subgraph)
-    idealPopulationLowerBound = idealPopulation - populationVariance * idealPopulation
-    idealPopulationUpperBound = idealPopulation + populationVariance * idealPopulation
+def calcPopulationAcceptability(subgraph: set, subgraphPopulation: int, idealPopulation: float, populationVar: float):
+    #subgraphPopulation = calculateSubgraphPopulation(subgraph)
+    idealPopulationLowerBound = idealPopulation - populationVar * idealPopulation
+    idealPopulationUpperBound = idealPopulation + populationVar * idealPopulation
 
     if subgraphPopulation > idealPopulationLowerBound and subgraphPopulation < idealPopulationUpperBound:
-        populationFlag = True
+        return True
+    return False
 
-    # condition 2: compactness score lower than user specified compactness
+def calcCompactnessAcceptability(subgraph: set, compactness: str):
     totalEdges = 0
     cutEdges = 0
 
@@ -233,6 +158,35 @@ def isGraphAcceptable(subgraph: set):
                 cutEdges = cutEdges + 1
     
     cutEdgeCompactness = totalEdges / cutEdges
+    
+    if compactness.upper() == myconstants.COMPACTNESS_ENUM_NOT:
+        if cutEdgeCompactness <= 5.0:
+            #print(cutEdgeCompactness)
+            return True
+    elif compactness.upper() == myconstants.COMPACTNESS_ENUM_SOMEWHAT:
+        if cutEdgeCompactness >= 5.0 and cutEdgeCompactness <= 15.0:
+            #print(cutEdgeCompactness)
+            return True
+    elif compactness.upper() == myconstants.COMPACTNESS_ENUM_VERY:
+        if cutEdgeCompactness >= 15.0 and cutEdgeCompactness <= 50.0:
+            #print(cutEdgeCompactness)
+            return True
+    else:
+        if cutEdgeCompactness >= 50:
+            #print(cutEdgeCompactness)
+            return True
+    
+    return False
+
+# returns boolean based on population and compactness conditions
+def isGraphAcceptable(subgraph: set, subgraphPopulation: int, idealPopulation: float, populationVar: float, compactness: str):
+    populationFlag = False
+    compactnessFlag = False
+    # condition 1: abs(population difference) < user specified population difference 
+    populationFlag = calcPopulationAcceptability(subgraph, subgraphPopulation, idealPopulation, populationVar)
+
+    # condition 2: compactness score lower than user specified compactness
+    compactnessFlag = calcCompactnessAcceptability(subgraph, compactness)
 
     return populationFlag and compactnessFlag
 
@@ -244,7 +198,7 @@ def getClusterTotalPopulation(id: str):
     return totalPop
 
 # given list of tuples from ST, find acceptability from subgraphs and generate feasible set of edges to cut
-def findValidEdges(edgeList: list):
+def findValidEdges(edgeList: list, idealPopulation: float, populationVar: float, compactness: str):
     validEdges = []
     acceptableEdges = []
     for edgeToRemove in edgeList: # check every edge in spanning tree list
@@ -252,9 +206,12 @@ def findValidEdges(edgeList: list):
 
         subgraph1 = subgraphs[0]
         subgraph2 = subgraphs[1]
+
+        subgraphPopulation1 = calculateSubgraphPopulation(subgraph1)
+        subgraphPopulation2 = calculateSubgraphPopulation(subgraph2)
         
-        subgraph1_acceptable = isGraphAcceptable(subgraph1)
-        subgraph2_acceptable = isGraphAcceptable(subgraph2)
+        subgraph1_acceptable = isGraphAcceptable(subgraph1, subgraphPopulation1, idealPopulation, populationVar, compactness)
+        subgraph2_acceptable = isGraphAcceptable(subgraph2, subgraphPopulation2, idealPopulation, populationVar, compactness)
 
         # if both tests pass acceptability test, add to validEdges
         if subgraph1_acceptable and subgraph2_acceptable: 
@@ -262,7 +219,7 @@ def findValidEdges(edgeList: list):
 
         # if one or both fail, see if the edge will better balance the population between subgraphs, if so add to acceptableEdges
         else:
-            subgraphPopulationDiff = abs(calculateSubgraphPopulation(subgraph1) - calculateSubgraphPopulation(subgraph2))
+            subgraphPopulationDiff = abs(subgraphPopulation1 - subgraphPopulation2)
             currPopulationDiff = abs(getClusterTotalPopulation(tempClusters[0]) - getClusterTotalPopulation(tempClusters[1]))
             if subgraphPopulationDiff < currPopulationDiff:
                 acceptableEdges.append(edgeToRemove)
@@ -272,6 +229,35 @@ def findValidEdges(edgeList: list):
         return acceptableEdges
         
     return validEdges
+
+# given list of tuples from ST, find acceptability from subgraphs and generate feasible set of edges to cut
+# this version takes the first edge we see, also updated to for subgraph population calculation optimization
+def findValidEdge(edgeList: list, idealPopulation: float, populationVar: float, compactness: str):
+    for edgeToRemove in edgeList: # check every edge in spanning tree list
+        subgraphs = generateSubgraphs(edgeList, edgeToRemove)
+
+        subgraph1 = subgraphs[0]
+        subgraph2 = subgraphs[1]
+
+        subgraphPopulation1 = calculateSubgraphPopulation(subgraph1)
+        subgraphPopulation2 = calculateSubgraphPopulation(subgraph2)
+        
+        subgraph1_acceptable = isGraphAcceptable(subgraph1, subgraphPopulation1, idealPopulation, populationVar, compactness)
+        subgraph2_acceptable = isGraphAcceptable(subgraph2, subgraphPopulation2, idealPopulation, populationVar, compactness)
+
+        # if both tests pass acceptability test, add to validEdges
+        if subgraph1_acceptable and subgraph2_acceptable: 
+            return edgeToRemove
+
+        # if one or both fail, see if the edge will better balance the population between subgraphs, if so add to acceptableEdges
+        else:
+            subgraphPopulationDiff = abs(subgraphPopulation1 - subgraphPopulation2)
+            currPopulationDiff = abs(getClusterTotalPopulation(tempClusters[0]) - getClusterTotalPopulation(tempClusters[1]))
+            if subgraphPopulationDiff < currPopulationDiff:
+                return edgeToRemove
+
+    # potentially can edit so that you return the best of the acceptable edges
+    return []
 
 # helper fxn to help verify if two clusters are neighbors based on their precincts
 def checkClusterNeighbors(lst1: list, lst2: list):
@@ -339,80 +325,13 @@ def cutEdge(edgeList: list, edgeToRemove: tuple, G):
                 G.add_edge(clusterid, subgraph2[0])
 
     return [subgraph1, subgraph2]
-
-    #newCluster1.setClusterPrecinctsList(clusterPrecinctList1)
-    #newCluster2.setClusterPrecinctsList(clusterPrecinctList2)
-
-    # generate cluster id for new clusters 
-    #newCluster1.setClusterID(clusterPrecinctList1[0].getPrecinctID())
-    #newCluster2.setClusterID(clusterPrecinctList2[0].getPrecinctID())
-
-    # generate neighbors list for new clusters // # update neighbors for preexisting clusters
-    #clusterNeighborList1 = [newCluster2]
-    #clusterNeighborList2 = [newCluster1]
-    '''
-    oldClusterNeighborList1 = oldCluster1.getClusterNeighborsList()
-    oldClusterNeighborList1.remove(oldCluster2)
-    oldClusterNeighborList2 = oldCluster2.getClusterNeighborsList()
-    oldClusterNeighborList2.remove(oldCluster1)
-    '''
-
-    '''
-    if oldClusterNeighborList1:
-        for c in oldClusterNeighborList1: 
-            if oldCluster1 in c.getClusterNeighborsList():
-                removeNeighbor(c, oldCluster1) # remove outdated cluster
-            if checkClusterNeighbors(c, newCluster1):
-                clusterNeighborList1.append(c) # add each other to neighbors list
-                addNeighbor(c, newCluster1)
-            if checkClusterNeighbors(c, newCluster2):
-                clusterNeighborList2.append(c) # add each other to neighbors list
-                addNeighbor(c, newCluster2)
-    if oldClusterNeighborList2:
-        for c in oldClusterNeighborList2: 
-            if oldCluster2 in c.getClusterNeighborsList():
-                removeNeighbor(c, oldCluster2) # remove outdated cluster
-            if checkClusterNeighbors(c, newCluster1):
-                clusterNeighborList1.append(c) # add each other to neighbors list
-                addNeighbor(c, newCluster1)
-            if checkClusterNeighbors(c, newCluster2):
-                clusterNeighborList2.append(c) # add each other to neighbors list
-                addNeighbor(c, newCluster2)
-    '''
-
-    #clusterNeighborList1 = list(set(clusterNeighborList1)) # remove duplicates
-    #clusterNeighborList2 = list(set(clusterNeighborList2))
-
-    #newCluster1.setClusterNeighborsList(clusterNeighborList1)
-    #newCluster2.setClusterNeighborsList(clusterNeighborList2)
-
-    # update global cluster list 
-    '''
-    print(tempClusters[0] in globalClusterList)
-    print(tempClusters[1] in globalClusterList)
-    print([tempClusters[0]])
-    print([tempClusters[1]])
-    print(globalClusterList)
-
-    print(tempClusters[0])
-    print(tempClusters[1])
-    print(stringifyList(globalClusterList))
-    if tempClusters[0] in globalClusterList:
-        globalClusterList.remove(tempClusters[0])
-    if tempClusters[1] in globalClusterList:    
-        globalClusterList.remove(tempClusters[1])
-    globalClusterList.append(newCluster1)
-    globalClusterList.append(newCluster2)
-
-    print(globalClusterList)
-    print(len(globalClusterList))
-    '''
-
+'''
 def allClustersAcceptableCheck(): 
-    for c in globalClusterList:
-        if not c.isAcceptable():
-            return False
-    return True
+    for id in clusterToPrecinctListDict:
+        if clusterToPrecinctListDict[id]:
+            print()
+        # check and print acceptability of all the clusters ig
+'''
 
 def calcIdealPopulation():
     totalPopulation = 0
@@ -430,17 +349,7 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
     clusterToPrecinctListDict.clear()
 
     globalNXGraph = nx.Graph()
-
-    ''' # old code used for tester json file
-    # load initial JSON data
-    with open(precinctGraphJSONFile) as f:
-        precinctsJSONData = json.load(f)
-    
-    # load initial precinct objects into list
-    precinctsJSONList = precinctsJSONData['precincts']
-    for p in precinctsJSONList:
-        globalPrecinctDict.update({p[myconstants.PRECINCT_ID]: Precinct(p)})
-    ''' 
+    noValidEdgeCount = 0
 
     precinctsJSONData = {}
     if state.lower() == myconstants.ARKANSAS or state.lower() == myconstants.ARKANSAS_ABBREVIATION:
@@ -484,7 +393,7 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
     # set up job params
     idealPopulation = calcIdealPopulation()
     populationVariance = populationVar
-    compactness = compactnessLvl
+    compactness = compactnessLvl # possible compactness levels: not, somewhat, very, extremely
 
     # try with contracted_nodes and nx
     for c in globalClusterList:
@@ -500,14 +409,6 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
 
     for c in globalClusterList:
         clusterToPrecinctListDict.update({c.getClusterID(): [c.getClusterID()]})
-
-    '''
-    print()
-    print("Initial Precinct Data")
-    print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-    for c in globalClusterList: 
-        print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-    '''
 
     # UC29: Generate Seed Districting
     # Merge random clusters until there are {requestedNumDistricts} clusters left 
@@ -529,50 +430,14 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
             del clusterToPrecinctListDict[randomNodeNeighbor]
         else: 
             continue
-        '''
-        print("CURRENT SEED DISTRICTING")
-        print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-        for c in globalClusterList: 
-            stringifyList(c.getClusterPrecinctsList())
-           
-        print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-        '''
+ 
         currNumClusters = len(list(globalNXGraph.nodes))
-    
-    '''
-    print("INTEGRITY TEST***************")
-    if nx.selfloop_edges(globalNXGraph):
-        globalNXGraph.remove_edges_from(nx.selfloop_edges(globalNXGraph))
-    print(len(list(globalNXGraph.nodes)))
-    print(len(list(globalNXGraph.edges)))
-    print(list(globalNXGraph.nodes))
-    print(list(globalNXGraph.edges))
-
-    print(len(clusterToPrecinctListDict))
-    for i in list(globalNXGraph.nodes):
-        print(len(clusterToPrecinctListDict[i]))
-    '''
-
-    '''
-    # print seed districting for debugging
-    print()
-    print("SEED DISTRICTING")
-    print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-    for c in globalClusterList: 
-        stringifyList(c.getClusterPrecinctsList())
-        print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-    print()
-    ''' 
-    '''
-    print(list(globalNXGraph.nodes))
-    for id in clusterToPrecinctListDict:
-                print(list(globalNXGraph.adj[id]))
-                '''
 
     currIterationCount = 1 
+    start_time = time.time()
 
     # keep iterating until all clusters are acceptable or until we've hit our iteration limit
-    while currIterationCount <= numIterations or allClustersAcceptableCheck():
+    while currIterationCount <= numIterations: #or allClustersAcceptableCheck():
         # UC30: Generate a random districting satisfying constraints
         # Combine the two sub-graphs to form a new sub-graph of simple nodes. 
         #print()
@@ -610,25 +475,30 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
 
         # UC33: Generate a feasible set of edges in the spanning tree to cut
         # UC32: Calculate the acceptability of each newly generated sub-graph
-        validEdgeList = findValidEdges(stEdgeList)
+        #validEdgeList = findValidEdges(stEdgeList, idealPopulation, populationVar, compactness)
+        validEdge = findValidEdge(stEdgeList, idealPopulation, populationVar, compactness)
         #print()
         #print("Generated valid edge list...")
         #print(len(validEdgeList))
         #print(validEdgeList)
         #print()
 
-        if not validEdgeList:
+        #if not validEdgeList:
+        if not validEdge:
             #print("No valid edges, moving onto next iteration.")
+            noValidEdgeCount = noValidEdgeCount + 1
+            pass
         else:
             # UC34: Cut the edge in the combined sub-graph
             #print("Choosing a random edge from valid edge list...")
-            randomValidEdge = random.sample(validEdgeList, 1) # random.sample returns a list
-            randomValidEdge = randomValidEdge[0]
+            #randomValidEdge = random.sample(validEdgeList, 1) # random.sample returns a list
+            #randomValidEdge = randomValidEdge[0]
             #print("Chosen edge: {}".format(randomValidEdge))
 
             #print()
             #print("Resulting new clusters from edge cut...")
-            newlyCreatedClusters = cutEdge(stEdgeList, randomValidEdge, globalNXGraph)
+            #newlyCreatedClusters = cutEdge(stEdgeList, randomValidEdge, globalNXGraph)
+            newlyCreatedClusters = cutEdge(stEdgeList, validEdge, globalNXGraph)
 
             del clusterToPrecinctListDict[tempClusters[0]]
             del clusterToPrecinctListDict[tempClusters[1]]
@@ -654,36 +524,14 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
             tempList.clear()
             for id in clusterToPrecinctListDict:
                 print(list(globalNXGraph.adj[id]))
-            '''
-
-            '''
-            print("Previous clusters...")
-            addNeighbor(tempClusters[0], tempClusters[1]) # dead statements to help with debugging visualization
-            addNeighbor(tempClusters[1], tempClusters[0])
-            print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-            for c in tempClusters: 
-                print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-            print("New clusters...")
-            print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-            for c in newlyCreatedClusters: 
-                print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-            '''
-            '''
-            print("Updated cluster list...")
-            print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-            for c in globalClusterList: 
-                print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
             print()
             '''
+
         currIterationCount = currIterationCount + 1 # increment counter
-    '''
-    print("Final cluster list...")
-    print("{:15s} | {:15s} | {:30s} | {:30s}".format("ClusterID", "Population", "Neighbors", "Precincts"))
-    for c in globalClusterList: 
-        print("{:15s} | {:<15d} | {:30s} | {:30s}".format('C'+c.getClusterID(), c.getClusterTotalPopulation(), stringifyList(c.getClusterNeighborsList()), stringifyList(c.getClusterPrecinctsList())))
-    '''
+
     returnPlan = []
     for id in clusterToPrecinctListDict:
         returnPlan.append(clusterToPrecinctListDict[id])
+    print("No valid edge times: {}". format(noValidEdgeCount))
     
     return returnPlan
