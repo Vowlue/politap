@@ -14,6 +14,7 @@ import { State } from './js/components/geojson/state.js'
 import { District } from './js/components/geojson/district.js'
 import { Precinct } from './js/components/geojson/precinct.js'
 import { JobDistrict } from './js/components/geojson/jobdistrict.js'
+import { HeatMap } from './js/components/geojson/heatmap.js'
 import { Sidebar } from './js/components/ui/sidebar.js'
 
 import './css/index.css'
@@ -34,11 +35,12 @@ class BiasMap extends Component {
       demographicContent: [],
       visibility: {
         state: true,
-        district: true,
+        district: false,
         precinct: false,
         random: false,
-        random2: false
+        random2: false,
       },
+      currentMinority: null,
       jobHistory: {},
       precinct_geojsons: {},
       jobLabelContent: "No job has been started yet.",
@@ -54,10 +56,26 @@ class BiasMap extends Component {
     this.modifyJobStatus = this.modifyJobStatus.bind(this)
     this.cancelHistoryJob = this.cancelHistoryJob.bind(this)
     this.setCurrentJobId = this.setCurrentJobId.bind(this)
+    this.setCurrentMinority = this.setCurrentMinority.bind(this)
 
     this.stateBounds = []
-    this.stateAdjustments = {Arkansas: [0, -0.6], Virginia: [-0.35, 0]}
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
+  }
+
+  setCurrentMinority(minority) {
+    if(this.state.currentMinority === minority) {
+      this.setState({
+        currentMinority: null
+      })
+    }
+    else {
+      this.setState({
+        currentMinority: null
+      })
+      setTimeout(() => this.setState({
+        currentMinority: minority
+      }), 20)
+    }
   }
 
   setCurrentJobId(id) {
@@ -153,27 +171,42 @@ class BiasMap extends Component {
     })
   }
 
-  showDemographics(precinct, county, stats) {
+  showDemographics(toShow, precinct, county, stats) {
+    if (toShow === null) {
+      this.setState({
+        hoveredPrecinct: "No precinct hovered.",
+        demographicContent: []
+      })
+      return 
+    }
     if(stats) {
       for (let i = 0; i<stats.length; i++) {
         stats[i] = stringifyNumber(stats[i])
       }
     }
-    this.setState({
-      hoveredPrecinct: precinct ? precinct + ' - ' + county : "No precinct hovered.",
-      demographicContent: precinct ? [
-      `Total: VAP: ${stats[0]}, POP: ${stats[1]}`,
-      `White: VAP: ${stats[2]}, POP: ${stats[3]} `,
-      `Hispanic: VAP: ${stats[4]}, POP: ${stats[5]} `,
-      `Black: VAP: ${stats[6]}, POP: ${stats[7]} `,
-      `Asian: VAP: ${stats[8]}, POP: ${stats[9]} `,
-      `Native American: VAP: ${stats[10]}, POP: ${stats[11]} `,
-      `Hawaiian Pacific: VAP: ${stats[12]}, POP: ${stats[13]} `,
-      `Other: VAP: ${stats[14]}, POP: ${stats[15]} `
-      ]
-      :
-      []
-    })
+    if (toShow === 'all') {
+      this.setState({
+        hoveredPrecinct: precinct + ' - ' + county ,
+        demographicContent: [
+        `Total: VAP: ${stats[0]}, POP: ${stats[1]}`,
+        `White: VAP: ${stats[2]}, POP: ${stats[3]} `,
+        `Hispanic: VAP: ${stats[4]}, POP: ${stats[5]} `,
+        `Black: VAP: ${stats[6]}, POP: ${stats[7]} `,
+        `Asian: VAP: ${stats[8]}, POP: ${stats[9]} `,
+        `Native American: VAP: ${stats[10]}, POP: ${stats[11]} `,
+        `Hawaiian Pacific: VAP: ${stats[12]}, POP: ${stats[13]} `,
+        `Other: VAP: ${stats[14]}, POP: ${stats[15]} `
+        ]
+      })
+    }
+    else {
+      this.setState({
+        hoveredPrecinct: precinct + ' - ' + county ,
+        demographicContent: [
+        `${toShow}: VAP: ${stats[0]}, POP: ${stats[1]}`,
+        ]
+      })
+    }
   }
 
   setStateBounds(state, bounds) {
@@ -191,25 +224,16 @@ class BiasMap extends Component {
               [state]: res
             }
           })
-          this.setVisibility('precinct', true)
         },
         err => {
           console.log(err)
         }
       )
     }
-    else {
-      this.setVisibility('precinct', true)
-    }
   }
 
   setActiveState(state) {
-    this.setVisibility('precinct', false)
     this.map.fitBounds(this.stateBounds[state])
-    if (state in this.stateAdjustments){
-      setTimeout(() => this.map.setView([this.map.getCenter().lat + this.stateAdjustments[state][0], this.map.getCenter().lng 
-      + this.stateAdjustments[state][1]]), 350)
-    }
     this.setState({
       activeState: state
     })
@@ -221,7 +245,7 @@ class BiasMap extends Component {
       <div id='app_container'>
         <SockJsClient url='http://localhost:8080/webSocket/'
           topics={ ['/jobStatus'] }
-          onMessage={ msg => { this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
+          onMessage={ msg => { console.log(msg);this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
           ref={(client) => {this.clientRef = client}}
         />
         <Sidebar 
@@ -235,6 +259,8 @@ class BiasMap extends Component {
           jobLabelContent={ this.state.jobLabelContent }
           cancelJob={ this.cancelHistoryJob }
           setCurrentJobId={this.setCurrentJobId}
+          currentMinority={this.state.currentMinority}
+          setCurrentMinority={this.setCurrentMinority}
         />
         <div id='map'>
           <MapContainer
@@ -268,6 +294,7 @@ class BiasMap extends Component {
                     key={ index }
                     data={ geojson }
                     setStateBounds={ this.setStateBounds }
+                    setActiveState={this.setActiveState}
                   />
                 )
               )
@@ -307,6 +334,12 @@ class BiasMap extends Component {
             {
               this.state.visibility.random2 ? 
               <JobDistrict color="#016936" data={this.state.jobHistory[this.state.currentJobId].jobDistricts.random2}/>
+              :
+              null
+            }
+            {
+              this.state.currentMinority ? 
+              <HeatMap minority={this.state.currentMinority} data={this.state.precinct_geojsons[this.state.activeState]} showDemographics={this.showDemographics}/>
               :
               null
             }

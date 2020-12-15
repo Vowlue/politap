@@ -1,31 +1,24 @@
-import { Button, Select, Input, Header, Icon, Dropdown, Form, Label, Divider, Message, Ref} from 'semantic-ui-react'
+import { Button, Input, Header, Icon, Dropdown, Form, Label, Divider, Message, Ref} from 'semantic-ui-react'
 import { generateSelection, createCheckbox } from '../../helpers/jsxHelper.js'
 import { useState } from 'react'
 
-const servers = ['Local', 'Seawulf']
 const censusCategories = ['White', 'Black or African American', 'American Indian or Alaska Native', 'Asian', 'Native Hawaiian or Other Pacific Islander', 'Other']
 const compactness = ['Not', 'Somewhat', 'Very', 'Extremely']
 
 function JobTab(props) {
     const jobInfo = {
-        plans: 5000,
-        populationVariance: 1000,
+        plans: 500,
+        populationVariance: 0.05,
         compactness: 'Somewhat',
-        server: 'Local',
         groups: [],
     }
 
     const [compactRef, setCompactRef] = useState(null) 
-    const [serverRef, setServerRef] = useState(null)
-
     const setPlans = (e) => {jobInfo.plans = e.target.value}
     const setPopulationVariance = (e) => {jobInfo.populationVariance = e.target.value}
     const setCompactness = () => {setTimeout(() => {
       let c = compactRef.firstChild.innerHTML
       jobInfo.compactness = c}, 10)}
-    const setServer = () => {setTimeout(() => {
-      let s = serverRef.firstChild.innerHTML
-      jobInfo.server = s}, 10)}
     const setGroup = (label) => {setTimeout(() => {
       const index = jobInfo.groups.indexOf(label);
       if (index > -1) {
@@ -36,6 +29,7 @@ function JobTab(props) {
       }}, 10)}
     const sendJob = () => {
       jobInfo.status = "Initialized"
+      jobInfo.server = jobInfo.plans <= 15 ? 'Local' : 'Seawulf'
       props.addJobToHistory(jobInfo)
     }
 
@@ -67,22 +61,16 @@ function JobTab(props) {
               <input min='1' onChange={setPopulationVariance.bind(this)}/>
             </Input>
           </Form.Field>
-          <Form.Field inline>
-            <Label color='blue' pointing='right' size='large'>Compactness</Label>
-            <Ref innerRef={setCompactRef}>
-              <Select onChange={setCompactness} placeholder={jobInfo.compactness} options={generateSelection(compactness)} />
-            </Ref>
-          </Form.Field>
           <Form.Field>
             <Label color='blue' size='large'>Racial / Ethnic Groups</Label>
           </Form.Field>
           {censusCategories.map(category => createCheckbox(category, setGroup))}
           <Form.Field>
-            Run this job on the{' '}
-            <Ref innerRef={setServerRef}>
-              <Dropdown floating inline options={generateSelection(servers)} onChange={setServer} defaultValue={jobInfo.server} />
+            Generated graphs should be{' '}
+            <Ref innerRef={setCompactRef}>
+              <Dropdown floating inline options={generateSelection(compactness)} onChange={setCompactness} defaultValue={jobInfo.compactness} />
             </Ref>
-            {' '}server.
+            {' '}compact.
           </Form.Field>
           {
             props.activeState ? 
