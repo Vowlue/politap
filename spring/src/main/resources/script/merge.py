@@ -9,6 +9,7 @@ import mysql.connector
 import geopandas as gpd
 import os
 import sys
+from os import path
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,7 +29,7 @@ def main(argv):
     cursor.execute("select * from job_info where id="+str(jobid))
     jobInfo = cursor.fetchone()
     state = jobInfo[5]
-    maps = [jobResults[2],jobResults[3],jobResults[4],jobResults[5]]
+    maps = [jobResults[1],jobResults[2],jobResults[4],jobResults[5]]
 
     df = gpd.read_file(PATH + '\..\json\\' + state + '_Precinct_New.geojson')
     df = df[["GEOID","geometry"]]
@@ -61,9 +62,17 @@ def main(argv):
     df4 = df.dissolve(by='District4')
     
     df1.to_file(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'average.geojson', driver='GeoJSON')
+    while (not path.exists(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'average.geojson')):
+        pass
     df2.to_file(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'extreme.geojson', driver='GeoJSON')
+    while (not path.exists(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'extreme.geojson')):
+        pass
     df3.to_file(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'random1.geojson', driver='GeoJSON')
+    while (not path.exists(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'random1.geojson')):
+        pass
     df4.to_file(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'random2.geojson', driver='GeoJSON')   
-
+    while (not path.exists(PATH + '\..\json\generatedDistrictings\\' + str(jobid) + 'random2.geojson')):
+        pass        
+        
 if __name__ == '__main__':
     main(sys.argv[1:])

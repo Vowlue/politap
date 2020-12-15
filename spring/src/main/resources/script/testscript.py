@@ -4,6 +4,7 @@ import os
 import geopandas as gpd
 from collections import deque
 import json
+from os import path
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 state_translation = {'ARKANSAS':'\AR','SOUTH_CAROLINA':'\SC','VIRGINIA':'\VA'}
@@ -48,8 +49,10 @@ def main(argv):
     
     with open(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.json', "w") as outfile:
         json.dump(dic,outfile)
-        outfile.close()
-    
+
+    while (not path.exists(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.json')):
+        pass
+
     print('json\generatedDistrictings' + str(state) + str(jobid) + '.json')
 
 if __name__ == '__main__':

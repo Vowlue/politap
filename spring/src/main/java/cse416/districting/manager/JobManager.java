@@ -114,7 +114,6 @@ public class JobManager {
             if (output == null)
                 return;
             Resource resource = new ClassPathResource(output);
-            System.out.println(resource.getURL().toString());
             JSONParser parser = new JSONParser();
             JSONObject json = (JSONObject) parser.parse(new InputStreamReader(resource.getInputStream()));
             JSONArray districtings = (JSONArray) json.get("plans");

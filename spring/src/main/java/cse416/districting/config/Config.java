@@ -26,7 +26,11 @@ public class Config {
     @Bean
     public MapManager mapManager(){
         return new MapManager();
-        
+    }
+
+    @Bean
+    public JobResultsManager jobResultsManager(){
+        return new JobResultsManager();
     }
     
     @Bean("threadPoolTaskExecutor")
