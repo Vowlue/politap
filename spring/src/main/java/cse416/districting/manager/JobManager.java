@@ -1,24 +1,48 @@
 package cse416.districting.manager;
 
+import cse416.districting.Enums.Demographic;
 import cse416.districting.Enums.JobStatus;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
+import cse416.districting.model.District;
+import cse416.districting.model.DistrictPrecinct;
+import cse416.districting.model.Districting;
 import cse416.districting.model.Job;
 import cse416.districting.model.JobInfoModel;
+import cse416.districting.model.JobResults;
+import cse416.districting.model.Precinct;
+import cse416.districting.repository.DistrictPrecinctRepository;
+import cse416.districting.repository.DistrictRepository;
+import cse416.districting.repository.DistrictingRepository;
 import cse416.districting.repository.JobInfoRepository;
+import cse416.districting.repository.JobResultsRepository;
+import cse416.districting.repository.PrecinctRepository;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 @Setter
 @Getter
@@ -33,9 +57,28 @@ public class JobManager {
     @Autowired
     private JobInfoRepository jobInfoRepository;
 
+    @Autowired
+    private PrecinctRepository precinctRepository;
+
+    @Autowired
+    private DistrictRepository districtRepository;
+
+    @Autowired
+    private DistrictingRepository districtingRepository;
+
+    @Autowired
+    private DistrictPrecinctRepository districtPrecinctRepository;
+
+    @Autowired
+    private JobResultsRepository jobResultsRepository;
+
     @PostConstruct
-    public void init(){
+    public void init() {
+        districtPrecinctRepository.deleteAll();
         jobInfoRepository.deleteAll();
+        districtRepository.deleteAll();
+        districtingRepository.deleteAll();
+        jobResultsRepository.deleteAll();
     }
 
     @Async("threadPoolTaskExecutor")
@@ -43,7 +86,7 @@ public class JobManager {
         System.out.println(jobInfo.toString());
         Job job = new Job(jobInfo, idCounter);
         jobs.put(idCounter, job);
-        jobInfoRepository.save(new JobInfoModel(idCounter,jobInfo));
+        jobInfoRepository.save(new JobInfoModel(idCounter, jobInfo));
         idCounter++;
         if (jobInfo.isLocal()) {
             runLocalProcess(job);
@@ -55,26 +98,145 @@ public class JobManager {
     private void runLocalProcess(Job job) {
         String stateName = job.getJobInfo().getState().toString();
         int jobID = job.getJobID();
+        int plans = job.getJobInfo().getPlans();
         ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/testscript.py",
-                stateName, Integer.toString(jobID));
+                stateName, Integer.toString(plans), Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
-            Thread.sleep(3000);
             Process process = processBuilder.start();
             sendMessage(JobStatus.RUNNING, jobID);
-
 
             job.setProcess(process);
             System.out.println(process);
             process.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream())); 
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String output = reader.readLine();
-            System.out.println("Script output:");
-            System.out.println(output);
-
-            if (output == null) return;
-            job.setFilename(output);
+            if (output == null)
+                return;
+            Resource resource = new ClassPathResource(output);
+            System.out.println(resource.getURL().toString());
+            JSONParser parser = new JSONParser();
+            JSONObject json = (JSONObject) parser.parse(new InputStreamReader(resource.getInputStream()));
+            JSONArray districtings = (JSONArray) json.get("plans");
+            JobResults jobResults = serverProcessing(districtings, job);
+            jobResults.setJobID(jobID);
+            updateToDatabase(districtings, jobResults);
+            makeMaps(jobID);
             sendMessage(JobStatus.DONE, jobID);
+        } catch (InterruptedException | IOException | ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JobResults serverProcessing(JSONArray districtingObj, Job job){
+        Demographic[] demo = job.getJobInfo().getDemographic();
+        ArrayList<ArrayList<Float>> orderedDistrictsList = new ArrayList<ArrayList<Float>>();
+        int numDistricts = ((JSONArray)districtingObj.get(0)).size();
+        int numDistrictings = districtingObj.size();
+        ArrayList<Float> average = new ArrayList<Float>(Collections.nCopies(numDistricts,Float.valueOf(0)));
+
+        for (Object districting : districtingObj){
+            ArrayList<Float> populations = new ArrayList<Float>();
+            for (Object district : (JSONArray)districting){
+                float districtTotal = 0;
+                float totalVAP = 0;
+                for (Object precinctGeoid : (JSONArray)district){
+                    Precinct precinct = precinctRepository.findOneByGeoid((String)precinctGeoid);
+                    HashMap<Demographic,Integer> map = new HashMap<Demographic,Integer>(precinct.getPopulationDataVAP());
+                    int precinctTotal = 0;
+                    for (Demographic d : demo) precinctTotal += map.get(d);
+                    totalVAP += map.get(Demographic.TOTAL);
+                    districtTotal += precinctTotal;
+                }
+                populations.add(districtTotal / totalVAP);
+                System.out.println(populations);
+            }
+            Collections.sort(populations);
+            for (int i = 0; i < populations.size(); i++){
+                average.set(i, average.get(i) + populations.get(i));
+            }
+            orderedDistrictsList.add(populations);
+        }
+
+        for (int i = 0; i < average.size(); i++){
+            average.set(i, average.get(i) / numDistrictings);
+        }
+        ArrayList<Float> absoluteDifferenceList = new ArrayList<Float>();
+        ArrayList<ArrayList<Float>> boxPlotData = new ArrayList<ArrayList<Float>>();
+        for (int i = 0; i < numDistricts; i++) boxPlotData.add(new ArrayList<Float>());
+        for (ArrayList<Float> a : orderedDistrictsList){
+            Float absoluteDifference = Float.valueOf(0);
+            for (int i = 0; i < average.size(); i++){
+                absoluteDifference += Math.abs(average.get(i)-a.get(i));
+                boxPlotData.get(i).add(a.get(i));
+            }
+            absoluteDifferenceList.add(absoluteDifference);
+        }
+        Float min = Collections.min(absoluteDifferenceList);
+        Float max = Collections.max(absoluteDifferenceList);
+        int minPos = absoluteDifferenceList.indexOf(min);
+        int maxPos = absoluteDifferenceList.indexOf(max);
+        System.out.println(minPos);
+        System.out.println(maxPos);
+        Random random = new Random();
+        int random1 = random.nextInt(absoluteDifferenceList.size());
+        while (random1 == minPos || random1 == maxPos) random1 = random.nextInt(absoluteDifferenceList.size());
+        int random2 = random.nextInt(absoluteDifferenceList.size());
+        while (random2 == minPos || random2 == maxPos || random2 == random1) random2 = random.nextInt(absoluteDifferenceList.size());
+        JobResults jobResults = new JobResults();
+        System.out.println(random1);
+        System.out.println(random2);
+        jobResults.setAverageIndex(minPos);
+        jobResults.setExtremeIndex(maxPos);
+        jobResults.setRandom1Index(random1);
+        jobResults.setRandom2Index(random2);
+        jobResults.setPlot(boxPlotData);
+        return jobResults;
+    }
+
+    private void updateToDatabase(JSONArray districtings, JobResults jobResults){
+        jobResultsRepository.save(jobResults);
+        updateDistrictings((JSONArray)districtings.get(jobResults.getAverageIndex()),jobResults,1);
+        updateDistrictings((JSONArray)districtings.get(jobResults.getExtremeIndex()),jobResults,2);
+        updateDistrictings((JSONArray)districtings.get(jobResults.getRandom1Index()),jobResults,3);
+        updateDistrictings((JSONArray)districtings.get(jobResults.getRandom2Index()),jobResults,4);
+        jobResultsRepository.save(jobResults);
+    }
+
+    private void updateDistrictings(JSONArray districting, JobResults jobResults, int type){
+        Districting districtingObj = new Districting();
+        if (type == 1) jobResults.setAverage(districtingRepository.save(districtingObj).getId());
+        if (type == 2) jobResults.setExtreme(districtingRepository.save(districtingObj).getId());
+        if (type == 3) jobResults.setRandom1(districtingRepository.save(districtingObj).getId());
+        if (type == 4) jobResults.setRandom2(districtingRepository.save(districtingObj).getId());
+        for (int j = 0; j < districting.size(); j++){
+            updateDistricts((JSONArray)districting.get(j),districtingObj);
+        }
+    }
+
+    private void updateDistricts(JSONArray district, Districting districtingObj){
+        District districtObj = new District();
+        districtObj.setDistricting(districtingObj);
+        int districtID = districtRepository.save(districtObj).getId();
+        List<DistrictPrecinct> arr = new ArrayList<DistrictPrecinct>();
+        Set<String> counties = new HashSet<String>();
+        for (int k = 0; k < district.size(); k++){
+            Precinct precinct = precinctRepository.findOneByGeoid((String)district.get(k));
+            counties.add(precinct.getCounty());
+            DistrictPrecinct districtPrecinct = new DistrictPrecinct(precinct.getGeoid(),districtID);
+            arr.add(districtPrecinct);
+        }
+        districtObj.setCounties(counties.size());
+        districtRepository.save(districtObj);
+        districtPrecinctRepository.saveAll(arr);
+    }
+
+    private void makeMaps(int jobID){
+        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/merge.py", Integer.toString(jobID));
+        processBuilder.redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+            process.waitFor();
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
@@ -105,9 +267,5 @@ public class JobManager {
         if (!jobs.containsKey(ID)) return JobStatus.ERROR;
         if (jobs.get(ID).checkAlive()) return JobStatus.RUNNING;
         return JobStatus.DONE;
-    }
-
-    public String getDistrictingFilename(int ID){
-        return jobs.get(ID).getFilename();
     }
 }

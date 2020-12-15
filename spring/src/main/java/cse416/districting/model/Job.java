@@ -10,7 +10,6 @@ public class Job {
     private int jobID;
     private JobInfo jobInfo;
     private Process process;
-    private String filename;
 
     public Job(JobInfo info, int ID) {
         jobInfo = info;
