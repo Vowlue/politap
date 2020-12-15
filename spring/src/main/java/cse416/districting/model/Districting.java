@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -23,7 +24,8 @@ import lombok.Setter;
 public class Districting {
     
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "districting_generator")
+    @SequenceGenerator(name="districting_generator", sequenceName = "districting_seq", allocationSize = 1)
     private int id;
 
     @OneToMany(mappedBy = "districting", fetch = FetchType.LAZY)

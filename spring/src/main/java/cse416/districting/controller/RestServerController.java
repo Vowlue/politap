@@ -58,9 +58,13 @@ public class RestServerController {
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
 		GenericResponse res = new GenericResponse();
-		int id = jobManager.getIdCounter();
 		jobManager.createJob(jobInfo);
+		int id = jobManager.getId();
+		while (id == -1){
+			id = jobManager.getId();
+		}
 		res.setID(id);
+		jobManager.setId(-1);
 		return res;
 	}
 
@@ -94,5 +98,10 @@ public class RestServerController {
 	@RequestMapping(value = "/getHistory")
 	public List<JobInfoModel> getHistory() {
 		return jobResultsManager.getHistory();
+	}
+
+	@RequestMapping(value = "/loadPlans")
+	public void loadPlans() {
+		jobManager.loadPlans();
 	}
 }

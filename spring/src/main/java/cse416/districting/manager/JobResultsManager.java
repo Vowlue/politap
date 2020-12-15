@@ -40,16 +40,17 @@ public class JobResultsManager {
         Map<String,JSONObject> maps = new HashMap<String,JSONObject>();
         for (String type : types){
             Resource resource = new ClassPathResource("json/generatedDistrictings/" + Integer.toString(jobID) + type + ".geojson");
-            while (!resource.exists() || !resource.isReadable()){
-                resource = new ClassPathResource("json/generatedDistrictings/" + Integer.toString(jobID) + type + ".geojson");
-            }
             Object obj;
             JSONParser parser = new JSONParser();
             try {
+                while (!resource.exists()){
+                    Thread.sleep(100);
+                    resource = new ClassPathResource("json/generatedDistrictings/" + Integer.toString(jobID) + type + ".geojson");
+                }
                 obj = parser.parse(new InputStreamReader(resource.getInputStream()));
                 JSONObject jsonObject = (JSONObject) obj;
                 maps.put(type, jsonObject);
-            } catch (IOException | ParseException e) {
+            } catch (IOException | ParseException | InterruptedException e) {
                 e.printStackTrace();
             }
         }

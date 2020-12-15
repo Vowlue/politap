@@ -52,8 +52,9 @@ def main(argv):
 
     while (not path.exists(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.json')):
         pass
-
-    print('json\generatedDistrictings' + str(state) + str(jobid) + '.json')
+    
+    if (path.exists(PATH + '\..\json\generatedDistrictings' + str(state) + str(jobid) + '.json')):
+        print('json\generatedDistrictings' + str(state) + str(jobid) + '.json')
 
 if __name__ == '__main__':
     main(sys.argv[1:])

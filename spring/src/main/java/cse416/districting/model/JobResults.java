@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -22,7 +23,8 @@ import lombok.Setter;
 public class JobResults {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "jobresults_generator")
+    @SequenceGenerator(name="jobresults_generator", sequenceName = "jobresults_seq", allocationSize = 1)
     private int id;
     private int jobID = -1;
     private int extreme = -1;
