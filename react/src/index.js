@@ -245,7 +245,7 @@ class BiasMap extends Component {
       <div id='app_container'>
         <SockJsClient url='http://localhost:8080/webSocket/'
           topics={ ['/jobStatus'] }
-          onMessage={ msg => { console.log(msg);this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
+          onMessage={ msg => { this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
           ref={(client) => {this.clientRef = client}}
         />
         <Sidebar 
