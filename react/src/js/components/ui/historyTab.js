@@ -77,7 +77,7 @@ function HistoryTab(props) {
               </Label>
               <Label size='large' color='teal' basic >
               Population Variance:
-                <Label.Detail content={stringifyNumber(jobInfo.populationVariance)}>
+                <Label.Detail content={jobInfo.populationVariance}>
                 </Label.Detail>
               </Label>
               <Label  size='large' color='teal' basic >
