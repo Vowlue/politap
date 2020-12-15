@@ -31,13 +31,13 @@ def main(argv):
     state = jobInfo[5]
     maps = [jobResults[1],jobResults[2],jobResults[4],jobResults[5]]
 
-    df = gpd.read_file(PATH + '\..\json\\' + state + '_Precinct_New.geojson')
+    df = gpd.read_file(PATH + '\..\json\\' + state + '_Precinct.json')
     df = df[["GEOID","geometry"]]
+    df = df.set_index("GEOID")
     df["District1"] = None
     df["District2"] = None
     df["District3"] = None
     df["District4"] = None
-    df = df.set_index("GEOID")
 
     dfid = ["District1","District2","District3","District4"]
     dfindex = 0

@@ -7,7 +7,9 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
 import cse416.districting.dto.*;
 import cse416.districting.manager.*;
+import cse416.districting.model.JobInfoModel;
 
+import java.util.List;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -87,5 +89,10 @@ public class RestServerController {
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
 	public Map<String,JSONObject> getDistrictings(@RequestBody GenericRequest req) {
 		return jobResultsManager.getDistrictingFiles(req.getID());
+	}
+
+	@RequestMapping(value = "/getHistory")
+	public List<JobInfoModel> getHistory() {
+		return jobResultsManager.getHistory();
 	}
 }

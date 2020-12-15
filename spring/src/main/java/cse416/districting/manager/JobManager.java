@@ -74,11 +74,11 @@ public class JobManager {
 
     @PostConstruct
     public void init() {
-        districtPrecinctRepository.deleteAll();
-        jobInfoRepository.deleteAll();
-        districtRepository.deleteAll();
-        districtingRepository.deleteAll();
-        jobResultsRepository.deleteAll();
+        //districtPrecinctRepository.deleteAll();
+        //jobInfoRepository.deleteAll();
+        //districtRepository.deleteAll();
+        //districtingRepository.deleteAll();
+        //jobResultsRepository.deleteAll();
     }
 
     @Async("threadPoolTaskExecutor")
