@@ -7,11 +7,7 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
 import cse416.districting.dto.*;
 import cse416.districting.manager.*;
-import cse416.districting.model.Precinct;
 
-//import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -28,8 +24,8 @@ public class RestServerController {
 	@Autowired
 	private JobManager jobManager;
 
-	//@Autowired
-	//private JobResultsManager jobResultsManager;
+	@Autowired
+	private JobResultsManager jobResultsManager;
 
 	@Autowired
 	private MapManager mapManager;
@@ -90,10 +86,6 @@ public class RestServerController {
 
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
 	public Map<String,JSONObject> getDistrictings(@RequestBody GenericRequest req) {
-		String filename = jobManager.getDistrictingFilename(req.getID());
-		Map<String,JSONObject> map = new HashMap<>();
-		map.put("random", mapManager.getDistrictingFile(filename));
-		map.put("random2", mapManager.getDistrictingFile(filename+"-2"));
-		return map;
+		return jobResultsManager.getDistrictingFiles(req.getID());
 	}
 }
