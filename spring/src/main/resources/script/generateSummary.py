@@ -9,6 +9,7 @@ import mysql.connector
 import json
 import geopandas as gpd
 import os
+import sys
 from os import path
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -44,9 +45,13 @@ def main (argv):
     precinctjson = df[["precinct","precinctID","county","population","votingAgePopulation","adjacentPrecincts","geometry"]]
     
     df1 = gpd.read_file(PATH + '\..\json\\generatedDistrictings\\' + str(jobid)+"average.geojson")
+    df1 = df1.rename(columns={"District1":"districtID"})
     df2 = gpd.read_file(PATH + '\..\json\\generatedDistrictings\\' + str(jobid)+"extreme.geojson")
+    df2 = df2.rename(columns={"District2":"districtID"})
     df3 = gpd.read_file(PATH + '\..\json\\generatedDistrictings\\' + str(jobid)+"random1.geojson")
+    df3 = df3.rename(columns={"District3":"districtID"})
     df4 = gpd.read_file(PATH + '\..\json\\generatedDistrictings\\' + str(jobid)+"random2.geojson")
+    df4 = df4.rename(columns={"District4":"districtID"})
     
     dataframes = []
     dataframes.append(df1)
@@ -58,11 +63,11 @@ def main (argv):
         data["adjacentDistricts"] = None
         data["precinctsInfo"] = None
         for index, row in data.iterrows():
-            neighbors = data[~data.geometry.disjoint(row.geometry)].index.tolist()
-            neighbors = [ str(name) for name in neighbors if index != name ]
+            neighbors = data[~data.geometry.disjoint(row.geometry)].districtID.tolist()
+            neighbors = [ str(name) for name in neighbors if row.districtID != name ]
             data.at[index, "adjacentDistricts"] = neighbors
-        for x,y in data[["geometry"]].itertuples():
-            cursor.execute("select * from district_precinct where district_id="+str(x))
+        for x,y,z in data[["geometry","districtID"]].itertuples():
+            cursor.execute("select * from district_precinct where districtid="+str(z))
             precinctinfo = []
             for precinct in cursor.fetchall():
                 precinctinfo.append({"precinctID":str(precinct[1]),"minorityPopulation":precinct[2],"minorityVotingAgePopulation":precinct[3]})
@@ -75,8 +80,8 @@ def main (argv):
             df3 = data
         if count == 3:
             df4 = data
+        count+=1
     
-    print(precinctjson.__geo_interface__)
     ret = {"states": [{"stateName":state_translation.get(state),
     "stateID":state,
     "precinctsGeoJson": precinctjson.__geo_interface__,
@@ -107,8 +112,8 @@ def main (argv):
     ]
     }
     ]}
-    with open(PATH + '\..\json\\generatedDistrictings\\' + str(jobid) + "results.json", 'w') as fp:
+    with open(PATH + '\..\json\\summaryFiles\\' + str(jobid) + "results.json", 'w') as fp:
         json.dump(ret, fp)
 
 if __name__ == '__main__':
-    main([2])
+    main(sys.argv[1:])

@@ -46,7 +46,7 @@ def main(argv):
         district_ids = [x[0] for x in cursor.fetchall()]
         dfname = dfid[dfindex]
         for districts in district_ids:
-            cursor.execute("select precinct_id from district_precinct where district_id="+str(districts))
+            cursor.execute("select precinctid from district_precinct where districtid="+str(districts))
             precinct_ids = [x[0] for x in cursor.fetchall()]
             for precincts in precinct_ids:
                 df.at[precincts,dfname] = districts

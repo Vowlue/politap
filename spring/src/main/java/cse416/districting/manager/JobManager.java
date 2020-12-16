@@ -40,7 +40,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -51,9 +50,6 @@ public class JobManager {
 
     private Map<Integer, Job> jobs;
     private int id = -1;
-
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
     private JobInfoRepository jobInfoRepository;
@@ -112,7 +108,7 @@ public class JobManager {
                 scriptResource = new ClassPathResource("script\\testscript.py");
             }
             Process process = processBuilder.start();
-            sendMessage(JobStatus.RUNNING, jobID);
+            updateStatus(JobStatus.RUNNING, jobID);
 
             job.setProcess(process);
             System.out.println(process);
@@ -135,7 +131,7 @@ public class JobManager {
             updateToDatabase(districtings, jobResults, job);
             makeMaps(jobID);
             //createSummaryFile(jobID);
-            sendMessage(JobStatus.DONE, jobID);
+            updateStatus(JobStatus.DONE, jobID);
         } catch (InterruptedException | IOException | ParseException e) {
             e.printStackTrace();
         }
@@ -203,7 +199,7 @@ public class JobManager {
         jobResults.setExtremeIndex(maxPos);
         jobResults.setRandom1Index(random1);
         jobResults.setRandom2Index(random2);
-        jobResults.setPlot(boxPlotData);
+        job.setPlot(boxPlotData);
         return jobResults;
     }
 
@@ -291,12 +287,8 @@ public class JobManager {
         //implement later
     }
 
-    private void sendMessage(JobStatus jobStatus, int jobID){
+    private void updateStatus(JobStatus jobStatus, int jobID){
         JobInfoModel jobInfo = jobInfoRepository.findById(jobID).get();
-        GenericResponse res = new GenericResponse();
-        res.setJobStatus(jobStatus);
-        res.setID(jobID);
-        simpMessagingTemplate.convertAndSend("/jobStatus", res);
         jobInfo.setStatus(jobStatus.toString());
         jobInfoRepository.save(jobInfo);
     }
@@ -334,6 +326,10 @@ public class JobManager {
         if (!jobs.containsKey(ID)) return JobStatus.ERROR;
         if (jobs.get(ID).checkAlive()) return JobStatus.RUNNING;
         return JobStatus.DONE;
+    }
+
+    public List<ArrayList<Float>> getBoxPlot(int jobID){
+        return jobs.get(jobID).getPlot();
     }
 
     @Async("threadPoolTaskExecutor")
