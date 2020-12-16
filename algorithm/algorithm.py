@@ -532,6 +532,6 @@ def runAlgorithm(state: str, populationVar: float, compactnessLvl: str):
     returnPlan = []
     for id in clusterToPrecinctListDict:
         returnPlan.append(clusterToPrecinctListDict[id])
-    print("No valid edge times: {}". format(noValidEdgeCount))
+    #print("No valid edge times: {}". format(noValidEdgeCount))
     
     return returnPlan

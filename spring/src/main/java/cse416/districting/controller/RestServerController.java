@@ -104,6 +104,8 @@ public class RestServerController {
 	@RequestMapping(value = "/loadPlans")
 	public void loadPlans() {
 		jobManager.loadPlans();
+		jobManager.loadPlans2();
+		jobManager.loadPlans3();
 	}
 
 	@PostMapping(value="/getBoxPlot", consumes = "application/json")

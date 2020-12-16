@@ -3,6 +3,7 @@ package cse416.districting.manager;
 import cse416.districting.Enums.Compactness;
 import cse416.districting.Enums.Demographic;
 import cse416.districting.Enums.JobStatus;
+import cse416.districting.Enums.States;
 import cse416.districting.dto.GenericResponse;
 import cse416.districting.dto.JobInfo;
 import cse416.districting.model.District;
@@ -22,6 +23,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -71,11 +74,11 @@ public class JobManager {
 
     @PostConstruct
     public void init() {
-        //districtPrecinctRepository.deleteAll();
-        //jobInfoRepository.deleteAll();
-        //districtRepository.deleteAll();
-        //districtingRepository.deleteAll();
-        //jobResultsRepository.deleteAll();
+        // districtPrecinctRepository.deleteAll();
+        // jobInfoRepository.deleteAll();
+        // districtRepository.deleteAll();
+        // districtingRepository.deleteAll();
+        // jobResultsRepository.deleteAll();
     }
 
     @Async("threadPoolTaskExecutor")
@@ -94,19 +97,15 @@ public class JobManager {
     }
 
     private void runLocalProcess(Job job) {
-        String stateName = job.getJobInfo().getState().toString();
+        String stateName = job.getJobInfo().getState().name();
         int jobID = job.getJobID();
         int plans = job.getJobInfo().getPlans();
-        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/testscript.py",
-                stateName, Integer.toString(plans), Integer.toString(jobID));
+        float variance = job.getJobInfo().getPopulationVariance();
+        String compactness = job.getJobInfo().getCompactness().toString();
+        ProcessBuilder processBuilder = new ProcessBuilder("py", "algorithm/main.py", Integer.toString(plans),
+                stateName, Float.toString(variance), compactness, Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
-            Resource scriptResource = new ClassPathResource("script\\testscript.py");
-            while (!scriptResource.exists()){
-                Thread.sleep(1000);
-                System.out.println("where's the script?");
-                scriptResource = new ClassPathResource("script\\testscript.py");
-            }
             Process process = processBuilder.start();
             updateStatus(JobStatus.RUNNING, jobID);
 
@@ -115,11 +114,15 @@ public class JobManager {
             process.waitFor();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String output = reader.readLine();
+            while (output != null){
+                System.out.println(output);
+                output = reader.readLine();
+            }
             if (output == null)
                 return;
             System.out.println(output);
             Resource resource = new ClassPathResource(output);
-            while (!resource.exists()){
+            while (!resource.exists()) {
                 Thread.sleep(1000);
                 resource = new ClassPathResource(output);
             }
@@ -130,30 +133,50 @@ public class JobManager {
             jobResults.setJobID(jobID);
             updateToDatabase(districtings, jobResults, job);
             makeMaps(jobID);
-            //createSummaryFile(jobID);
+            createSummaryFile(jobID);
             updateStatus(JobStatus.DONE, jobID);
         } catch (InterruptedException | IOException | ParseException e) {
             e.printStackTrace();
         }
     }
 
-    private JobResults serverProcessing(JSONArray districtingObj, Job job){
+    private void runSeawulfProcess(Job job) {
+        String stateName = job.getJobInfo().getState().name();
+        int jobID = job.getJobID();
+        int plans = job.getJobInfo().getPlans();
+        float variance = job.getJobInfo().getPopulationVariance();
+        String compactness = job.getJobInfo().getCompactness().toString();
+        ProcessBuilder processBuilder = new ProcessBuilder().command("cmd", "sh", "seawulf/jobsubmit.sh",
+                Integer.toString(jobID), stateName, Float.toString(variance), compactness, Integer.toString(plans));
+        processBuilder.redirectErrorStream(true);
+        try {
+            processBuilder.start();
+            updateStatus(JobStatus.RUNNING, jobID);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private JobResults serverProcessing(JSONArray districtingObj, Job job) {
         Demographic[] demo = job.getJobInfo().getDemographic();
         ArrayList<ArrayList<Float>> orderedDistrictsList = new ArrayList<ArrayList<Float>>();
-        int numDistricts = ((JSONArray)districtingObj.get(0)).size();
+        int numDistricts = ((JSONArray) districtingObj.get(0)).size();
         int numDistrictings = districtingObj.size();
-        ArrayList<Float> average = new ArrayList<Float>(Collections.nCopies(numDistricts,Float.valueOf(0)));
+        ArrayList<Float> average = new ArrayList<Float>(Collections.nCopies(numDistricts, Float.valueOf(0)));
 
-        for (Object districting : districtingObj){
+        for (Object districting : districtingObj) {
             ArrayList<Float> populations = new ArrayList<Float>();
-            for (Object district : (JSONArray)districting){
+            for (Object district : (JSONArray) districting) {
                 float districtTotal = 0;
                 float totalVAP = 0;
-                for (Object precinctGeoid : (JSONArray)district){
-                    Precinct precinct = precinctRepository.findOneByGeoid((String)precinctGeoid);
-                    HashMap<Demographic,Integer> map = new HashMap<Demographic,Integer>(precinct.getPopulationDataVAP());
+                for (Object precinctGeoid : (JSONArray) district) {
+                    Precinct precinct = precinctRepository.findOneByGeoid((String) precinctGeoid);
+                    HashMap<Demographic, Integer> map = new HashMap<Demographic, Integer>(
+                            precinct.getPopulationDataVAP());
                     int precinctTotal = 0;
-                    for (Demographic d : demo) precinctTotal += map.get(d);
+                    for (Demographic d : demo)
+                        precinctTotal += map.get(d);
                     totalVAP += map.get(Demographic.TOTAL);
                     districtTotal += precinctTotal;
                 }
@@ -161,22 +184,23 @@ public class JobManager {
                 System.out.println(populations);
             }
             Collections.sort(populations);
-            for (int i = 0; i < populations.size(); i++){
+            for (int i = 0; i < populations.size(); i++) {
                 average.set(i, average.get(i) + populations.get(i));
             }
             orderedDistrictsList.add(populations);
         }
 
-        for (int i = 0; i < average.size(); i++){
+        for (int i = 0; i < average.size(); i++) {
             average.set(i, average.get(i) / numDistrictings);
         }
         ArrayList<Float> absoluteDifferenceList = new ArrayList<Float>();
         ArrayList<ArrayList<Float>> boxPlotData = new ArrayList<ArrayList<Float>>();
-        for (int i = 0; i < numDistricts; i++) boxPlotData.add(new ArrayList<Float>());
-        for (ArrayList<Float> a : orderedDistrictsList){
+        for (int i = 0; i < numDistricts; i++)
+            boxPlotData.add(new ArrayList<Float>());
+        for (ArrayList<Float> a : orderedDistrictsList) {
             Float absoluteDifference = Float.valueOf(0);
-            for (int i = 0; i < average.size(); i++){
-                absoluteDifference += Math.abs(average.get(i)-a.get(i));
+            for (int i = 0; i < average.size(); i++) {
+                absoluteDifference += Math.abs(average.get(i) - a.get(i));
                 boxPlotData.get(i).add(a.get(i));
             }
             absoluteDifferenceList.add(absoluteDifference);
@@ -189,9 +213,11 @@ public class JobManager {
         System.out.println(maxPos);
         Random random = new Random();
         int random1 = random.nextInt(absoluteDifferenceList.size());
-        while (random1 == minPos || random1 == maxPos) random1 = random.nextInt(absoluteDifferenceList.size());
+        while (random1 == minPos || random1 == maxPos)
+            random1 = random.nextInt(absoluteDifferenceList.size());
         int random2 = random.nextInt(absoluteDifferenceList.size());
-        while (random2 == minPos || random2 == maxPos || random2 == random1) random2 = random.nextInt(absoluteDifferenceList.size());
+        while (random2 == minPos || random2 == maxPos || random2 == random1)
+            random2 = random.nextInt(absoluteDifferenceList.size());
         JobResults jobResults = new JobResults();
         System.out.println(random1);
         System.out.println(random2);
@@ -199,32 +225,35 @@ public class JobManager {
         jobResults.setExtremeIndex(maxPos);
         jobResults.setRandom1Index(random1);
         jobResults.setRandom2Index(random2);
-        System.out.println(boxPlotData);
         job.setPlot(boxPlotData);
         return jobResults;
     }
 
-    private void updateToDatabase(JSONArray districtings, JobResults jobResults, Job job){
+    private void updateToDatabase(JSONArray districtings, JobResults jobResults, Job job) {
         jobResultsRepository.save(jobResults);
-        updateDistrictings((JSONArray)districtings.get(jobResults.getAverageIndex()),jobResults,1,job);
-        updateDistrictings((JSONArray)districtings.get(jobResults.getExtremeIndex()),jobResults,2,job);
-        updateDistrictings((JSONArray)districtings.get(jobResults.getRandom1Index()),jobResults,3,job);
-        updateDistrictings((JSONArray)districtings.get(jobResults.getRandom2Index()),jobResults,4,job);
+        updateDistrictings((JSONArray) districtings.get(jobResults.getAverageIndex()), jobResults, 1, job);
+        updateDistrictings((JSONArray) districtings.get(jobResults.getExtremeIndex()), jobResults, 2, job);
+        updateDistrictings((JSONArray) districtings.get(jobResults.getRandom1Index()), jobResults, 3, job);
+        updateDistrictings((JSONArray) districtings.get(jobResults.getRandom2Index()), jobResults, 4, job);
         jobResultsRepository.save(jobResults);
     }
 
-    private void updateDistrictings(JSONArray districting, JobResults jobResults, int type, Job job){
+    private void updateDistrictings(JSONArray districting, JobResults jobResults, int type, Job job) {
         Districting districtingObj = new Districting();
-        if (type == 1) jobResults.setAverage(districtingRepository.save(districtingObj).getId());
-        if (type == 2) jobResults.setExtreme(districtingRepository.save(districtingObj).getId());
-        if (type == 3) jobResults.setRandom1(districtingRepository.save(districtingObj).getId());
-        if (type == 4) jobResults.setRandom2(districtingRepository.save(districtingObj).getId());
-        for (int j = 0; j < districting.size(); j++){
-            updateDistricts((JSONArray)districting.get(j),districtingObj, job);
+        if (type == 1)
+            jobResults.setAverage(districtingRepository.save(districtingObj).getId());
+        if (type == 2)
+            jobResults.setExtreme(districtingRepository.save(districtingObj).getId());
+        if (type == 3)
+            jobResults.setRandom1(districtingRepository.save(districtingObj).getId());
+        if (type == 4)
+            jobResults.setRandom2(districtingRepository.save(districtingObj).getId());
+        for (int j = 0; j < districting.size(); j++) {
+            updateDistricts((JSONArray) districting.get(j), districtingObj, job);
         }
     }
 
-    private void updateDistricts(JSONArray district, Districting districtingObj, Job job){
+    private void updateDistricts(JSONArray district, Districting districtingObj, Job job) {
         District districtObj = new District();
         districtObj.setDistricting(districtingObj);
         int districtID = districtRepository.save(districtObj).getId();
@@ -235,20 +264,20 @@ public class JobManager {
         long minority = 0;
         long minorityvap = 0;
         Demographic[] demo = job.getJobInfo().getDemographic();
-        for (int k = 0; k < district.size(); k++){
-            Precinct precinct = precinctRepository.findOneByGeoid((String)district.get(k));
+        for (int k = 0; k < district.size(); k++) {
+            Precinct precinct = precinctRepository.findOneByGeoid((String) district.get(k));
             population += precinct.getTotal();
             vap += precinct.getTotal_vap();
             long precinctminority = 0;
             long precinctminorityvap = 0;
-            for(Demographic d : demo){
+            for (Demographic d : demo) {
                 precinctminority += precinct.getPopulationData().get(d);
                 minority += precinct.getPopulationData().get(d);
                 precinctminorityvap += precinct.getPopulationDataVAP().get(d);
                 minorityvap += precinct.getPopulationDataVAP().get(d);
             }
             counties.add(precinct.getCounty());
-            DistrictPrecinct districtPrecinct = new DistrictPrecinct(precinct.getGeoid(),districtID);
+            DistrictPrecinct districtPrecinct = new DistrictPrecinct(precinct.getGeoid(), districtID);
             districtPrecinct.setMinority(precinctminority);
             districtPrecinct.setMinorityvap(precinctminorityvap);
             arr.add(districtPrecinct);
@@ -262,8 +291,9 @@ public class JobManager {
         districtPrecinctRepository.saveAll(arr);
     }
 
-    private void makeMaps(int jobID){
-        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/merge.py", Integer.toString(jobID));
+    private void makeMaps(int jobID) {
+        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/merge.py",
+                Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
@@ -274,7 +304,8 @@ public class JobManager {
     }
 
     private void createSummaryFile(int jobID) {
-        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/generatesummary.py", Integer.toString(jobID));
+        ProcessBuilder processBuilder = new ProcessBuilder("py", "spring/src/main/resources/script/generatesummary.py",
+                Integer.toString(jobID));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
@@ -284,65 +315,173 @@ public class JobManager {
         }
     }
 
-    private void runSeawulfProcess(Job job){
-        //implement later
-    }
-
-    private void updateStatus(JobStatus jobStatus, int jobID){
+    private void updateStatus(JobStatus jobStatus, int jobID) {
         JobInfoModel jobInfo = jobInfoRepository.findById(jobID).get();
         jobInfo.setStatus(jobStatus.toString());
         jobInfoRepository.save(jobInfo);
     }
 
-    public boolean cancelJob(int ID){
-        jobs.get(ID).cancel();
+    public boolean cancelJob(int ID) {
+        if (jobs.containsKey(ID)) {
+            if (!jobs.get(ID).getJobInfo().isLocal())
+                cancelJobSeawulf(ID);
+            else
+                jobs.get(ID).cancel();
+        }
         JobInfoModel jobinfoModel = jobInfoRepository.findById(ID).get();
         jobInfoRepository.delete(jobinfoModel);
         return true;
     }
 
-    public boolean deleteJob(int ID){
-        JobInfoModel jobInfoModel = jobInfoRepository.findById(ID).get();
-        if (!jobInfoModel.getStatus().equals("DONE")){
-            jobInfoRepository.delete(jobInfoModel);
-            return true;
+    public void cancelJobSeawulf(int jobID) {
+        ProcessBuilder processBuilder = new ProcessBuilder().command("cmd", "sh", "seawulf/jobcancel.sh",
+                Integer.toString(jobID));
+        processBuilder.redirectErrorStream(true);
+        try {
+            processBuilder.start();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        JobResults jobResult = jobResultsRepository.findOneByJobID(ID);
-        List<Integer> arr = new ArrayList<>();
-        arr.add(jobResult.getAverage());
-        arr.add(jobResult.getExtreme());
-        arr.add(jobResult.getRandom1());
-        arr.add(jobResult.getRandom2());
-        for (Integer a : arr){
-            Districting districting = districtingRepository.findById(a).get();
-            for (District d : districting.getDistricts()){
-                districtPrecinctRepository.deleteByIdDistrictid(d.getId());
-                districtRepository.delete(d);
-            }
-            districtingRepository.delete(districting);
-        }
-        jobResultsRepository.delete(jobResult);
-        jobInfoRepository.delete(jobInfoModel);
-        jobs.remove(ID);
-        return true;
     }
 
-    public JobStatus jobStatus(int ID){
-        if (!jobs.containsKey(ID)) return JobStatus.ERROR;
-        if (jobs.get(ID).checkAlive()) return JobStatus.RUNNING;
+    public boolean deleteJob(int ID) {
+        return cancelJob(ID);
+        // JobInfoModel jobInfoModel = jobInfoRepository.findById(ID).get();
+        // if (!jobInfoModel.getStatus().equals("DONE")){
+        // jobInfoRepository.delete(jobInfoModel);
+        // return true;
+        // }
+        // JobResults jobResult = jobResultsRepository.findOneByJobID(ID);
+        // List<Integer> arr = new ArrayList<>();
+        // arr.add(jobResult.getAverage());
+        // arr.add(jobResult.getExtreme());
+        // arr.add(jobResult.getRandom1());
+        // arr.add(jobResult.getRandom2());
+        // for (Integer a : arr){
+        // Districting districting = districtingRepository.findById(a).get();
+        // for (District d : districting.getDistricts()){
+        // districtPrecinctRepository.deleteByIdDistrictid(d.getId());
+        // districtRepository.delete(d);
+        // }
+        // districtingRepository.delete(districting);
+        // }
+        // jobResultsRepository.delete(jobResult);
+        // jobInfoRepository.delete(jobInfoModel);
+        // jobs.remove(ID);
+        // return true;
+    }
+
+    public JobStatus jobStatus(int ID) {
+        if (!jobs.containsKey(ID))
+            return JobStatus.ERROR;
+        if (jobs.get(ID).checkAlive())
+            return JobStatus.RUNNING;
         return JobStatus.DONE;
     }
 
-    public List<ArrayList<Float>> getBoxPlot(int jobID){
-        List<ArrayList<Float>> plot = jobs.get(jobID).getPlot();
-        System.out.println(plot);
-        return plot;
+    public List<ArrayList<Float>> getBoxPlot(int jobID) {
+        return jobs.get(jobID).getPlot();
     }
 
     @Async("threadPoolTaskExecutor")
     public void loadPlans() {
         JobInfo jobInfo = new JobInfo();
         jobInfo.setCompactness(Compactness.VERY);
-        //jobInfo.setPopulationVariance(0.1);
+        jobInfo.setPopulationVariance(Float.valueOf("0.1"));
+        jobInfo.setLocal(true);
+        jobInfo.setPlans(10);
+        jobInfo.setState(States.ARKANSAS);
+        Demographic[] demo = new Demographic[1];
+        demo[0] = Demographic.BLACK_OR_AFRICAN_AMERICAN;
+        jobInfo.setDemographic(demo);
+        JobInfoModel jobInfoModel = new JobInfoModel(jobInfo);
+        int jobID = jobInfoRepository.save(jobInfoModel).getId();
+        Job job = new Job(jobInfo, jobID);
+        jobs.put(jobID, job);
+        try {
+            JSONParser jsonParser = new JSONParser();
+            FileReader reader = new FileReader("seawulf\\testdata\\plan2\\plan0.json");
+            FileReader reader2 = new FileReader("seawulf\\testdata\\plan2\\plan1.json");
+            JSONObject object = (JSONObject)jsonParser.parse(reader);
+            JSONObject object2 = (JSONObject)jsonParser.parse(reader2);
+            object.putAll(object2);
+            JSONArray districtings = (JSONArray) object.get("plans");
+            JobResults jobResults = serverProcessing(districtings, job);
+            jobResults.setJobID(jobID);
+            updateToDatabase(districtings, jobResults, job);
+            makeMaps(jobID);
+            createSummaryFile(jobID);
+            updateStatus(JobStatus.DONE, jobID);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Async("threadPoolTaskExecutor")
+    public void loadPlans2() {
+        JobInfo jobInfo = new JobInfo();
+        jobInfo.setCompactness(Compactness.VERY);
+        jobInfo.setPopulationVariance(Float.valueOf("0.1"));
+        jobInfo.setLocal(false);
+        jobInfo.setPlans(50);
+        jobInfo.setState(States.SOUTH_CAROLINA);
+        Demographic[] demo = new Demographic[1];
+        demo[0] = Demographic.BLACK_OR_AFRICAN_AMERICAN;
+        jobInfo.setDemographic(demo);
+        JobInfoModel jobInfoModel = new JobInfoModel(jobInfo);
+        int jobID = jobInfoRepository.save(jobInfoModel).getId();
+        Job job = new Job(jobInfo, jobID);
+        jobs.put(jobID, job);
+        try {
+            JSONParser jsonParser = new JSONParser();
+            FileReader reader = new FileReader("seawulf\\testdata\\plan3\\plan0.json");
+            FileReader reader2 = new FileReader("seawulf\\testdata\\plan3\\plan1.json");
+            JSONObject object = (JSONObject)jsonParser.parse(reader);
+            JSONObject object2 = (JSONObject)jsonParser.parse(reader2);
+            object.putAll(object2);
+            JSONArray districtings = (JSONArray) object.get("plans");
+            JobResults jobResults = serverProcessing(districtings, job);
+            jobResults.setJobID(jobID);
+            updateToDatabase(districtings, jobResults, job);
+            makeMaps(jobID);
+            createSummaryFile(jobID);
+            updateStatus(JobStatus.DONE, jobID);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Async("threadPoolTaskExecutor")
+    public void loadPlans3() {
+        JobInfo jobInfo = new JobInfo();
+        jobInfo.setCompactness(Compactness.VERY);
+        jobInfo.setPopulationVariance(Float.valueOf("0.1"));
+        jobInfo.setLocal(false);
+        jobInfo.setPlans(50);
+        jobInfo.setState(States.VIRGINIA);
+        Demographic[] demo = new Demographic[1];
+        demo[0] = Demographic.BLACK_OR_AFRICAN_AMERICAN;
+        jobInfo.setDemographic(demo);
+        JobInfoModel jobInfoModel = new JobInfoModel(jobInfo);
+        int jobID = jobInfoRepository.save(jobInfoModel).getId();
+        Job job = new Job(jobInfo, jobID);
+        jobs.put(jobID, job);
+        try {
+            JSONParser jsonParser = new JSONParser();
+            FileReader reader = new FileReader("seawulf\\testdata\\plan4\\plan0.json");
+            FileReader reader2 = new FileReader("seawulf\\testdata\\plan4\\plan1.json");
+            JSONObject object = (JSONObject)jsonParser.parse(reader);
+            JSONObject object2 = (JSONObject)jsonParser.parse(reader2);
+            object.putAll(object2);
+            JSONArray districtings = (JSONArray) object.get("plans");
+            JobResults jobResults = serverProcessing(districtings, job);
+            jobResults.setJobID(jobID);
+            updateToDatabase(districtings, jobResults, job);
+            makeMaps(jobID);
+            createSummaryFile(jobID);
+            updateStatus(JobStatus.DONE, jobID);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
     }
 }

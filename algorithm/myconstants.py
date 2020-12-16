@@ -4,9 +4,9 @@ PRECINCT_NEIGHBORS_LIST = "neighbor"
 PRECINCT_POPULATION = "population"
 
 # file names
-ARKANSAS_NEIGHBOR_FILENAME = "AR_Neighbor.json"
-SOUTHCAROLINA_NEIGHBOR_FILENAME = "SC_Neighbor.json"
-VIRGINIA_NEIGHBOR_FILENAME = "VA_Neighbor.json"
+ARKANSAS_NEIGHBOR_FILENAME = "preprocessing/AR/AR_Neighbor.json"
+SOUTHCAROLINA_NEIGHBOR_FILENAME = "preprocessing/SC/SC_Neighbor.json"
+VIRGINIA_NEIGHBOR_FILENAME = "preprocessing/VA/VA_Neighbor.json"
 
 # district numbers 
 ARKANSAS_NUM_DISTRICTS = 4
