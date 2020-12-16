@@ -39,7 +39,7 @@ const getHistory = async (callback, errfunc) => {
 }
 
 const getBoxPlot = async (id, callback, errfunc) => {
-  axios.post(`${server}/getBoxPlot`)
+  axios.post(`${server}/getBoxPlot`, id)
   .then(res => { callback(res.data) })
   .catch(err => { errfunc(err) })
 }

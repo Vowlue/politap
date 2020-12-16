@@ -98,7 +98,7 @@ class BiasMap extends Component {
                     description: <p>{`Job #${id} has been canceled.`}</p>
                 }
             );
-        }, 1500);
+        }, 500);
         }
       },
       err => {

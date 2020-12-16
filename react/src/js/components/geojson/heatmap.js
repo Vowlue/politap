@@ -3,7 +3,7 @@ import { GeoJSON } from 'react-leaflet'
 const colorMap = {
   "Black or African American": [271,100,50],
   "Hispanic or Latino": [357,78,44],
-  "White": [33,100,50],
+  "White": [24,100,50],
   "Asian": [120,100,45],
   "American Indian and Alaska Native": [168,100,50],
   "Native Hawaiian and Other Pacific Islander": [312,100,55],

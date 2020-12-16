@@ -16,6 +16,10 @@ const upperCaseString = stringList => {
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
+
+    const callFunc = id => {
+      getBoxPlot(id, res => console.log(res), err => console.log(err))
+    }
     const panels = [
       {
         key: 'more-options',
@@ -37,14 +41,8 @@ function HistoryTab(props) {
               </Popup.Content>
             </Popup>
             <Header textAlign='center' as='div' size='small'>Job Districts</Header>
-            <Button onClick={() => getBoxPlot(jobInfo.id,
-      res => {
-        console.log(res)
-      },
-      err => {
-        console.log(err)
-      }
-    )}>TEST BUTTON</Button>
+            <Button onClick={() => callFunc(jobInfo.id)}>
+              TEST BUTTON</Button>
             <Button 
               color='red'
               basic={!props.visibility.random} 
@@ -70,7 +68,7 @@ function HistoryTab(props) {
     ]
     return (
       <Segment key={jobInfo.id}>
-        <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='right'></Label>
+        <Label onClick={() => props.removeJobFromHistory(jobInfo.id)} color='red' icon='x' corner='left'></Label>
         <Header textAlign='center' as='h3'>
           {`Job #${jobInfo.id}`}
           <Header.Subheader>
