@@ -199,6 +199,7 @@ public class JobManager {
         jobResults.setExtremeIndex(maxPos);
         jobResults.setRandom1Index(random1);
         jobResults.setRandom2Index(random2);
+        System.out.println(boxPlotData);
         job.setPlot(boxPlotData);
         return jobResults;
     }
@@ -301,6 +302,11 @@ public class JobManager {
     }
 
     public boolean deleteJob(int ID){
+        JobInfoModel jobInfoModel = jobInfoRepository.findById(ID).get();
+        if (!jobInfoModel.getStatus().equals("DONE")){
+            jobInfoRepository.delete(jobInfoModel);
+            return true;
+        }
         JobResults jobResult = jobResultsRepository.findOneByJobID(ID);
         List<Integer> arr = new ArrayList<>();
         arr.add(jobResult.getAverage());
@@ -316,7 +322,6 @@ public class JobManager {
             districtingRepository.delete(districting);
         }
         jobResultsRepository.delete(jobResult);
-        JobInfoModel jobInfoModel = jobInfoRepository.findById(ID).get();
         jobInfoRepository.delete(jobInfoModel);
         jobs.remove(ID);
         return true;
@@ -329,7 +334,9 @@ public class JobManager {
     }
 
     public List<ArrayList<Float>> getBoxPlot(int jobID){
-        return jobs.get(jobID).getPlot();
+        List<ArrayList<Float>> plot = jobs.get(jobID).getPlot();
+        System.out.println(plot);
+        return plot;
     }
 
     @Async("threadPoolTaskExecutor")
