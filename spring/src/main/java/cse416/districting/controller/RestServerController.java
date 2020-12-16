@@ -109,7 +109,7 @@ public class RestServerController {
 	}
 
 	@PostMapping(value="/getBoxPlot", consumes = "application/json")
-	public List<ArrayList<Float>> getPlotData(@RequestBody GenericRequest req) {
+	public List<ArrayList<Double>> getPlotData(@RequestBody GenericRequest req) {
 		return jobManager.getBoxPlot(req.getID());
 	}
 }
