@@ -1,5 +1,8 @@
 package cse416.districting.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cse416.districting.dto.JobInfo;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +13,7 @@ public class Job {
     private int jobID;
     private JobInfo jobInfo;
     private Process process;
-    private String filename;
+    private List<ArrayList<Float>> plot;
 
     public Job(JobInfo info, int ID) {
         jobInfo = info;

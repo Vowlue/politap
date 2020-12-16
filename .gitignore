@@ -69,4 +69,3 @@ yarn-error.log*
 
 spring/bin/
 spring/mvnw.cmd
-spring/src/main/resources/json/generatedDistrictings/

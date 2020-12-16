@@ -7,11 +7,10 @@ import cse416.districting.Enums.JobStatus;
 import cse416.districting.Enums.States;
 import cse416.districting.dto.*;
 import cse416.districting.manager.*;
-import cse416.districting.model.Precinct;
+import cse416.districting.model.JobInfoModel;
 
-//import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -28,8 +27,8 @@ public class RestServerController {
 	@Autowired
 	private JobManager jobManager;
 
-	//@Autowired
-	//private JobResultsManager jobResultsManager;
+	@Autowired
+	private JobResultsManager jobResultsManager;
 
 	@Autowired
 	private MapManager mapManager;
@@ -60,9 +59,13 @@ public class RestServerController {
 	@PostMapping(value="/initiateJob", consumes = "application/json")
 	public GenericResponse initiateJob(@RequestBody JobInfo jobInfo) {
 		GenericResponse res = new GenericResponse();
-		int id = jobManager.getIdCounter();
 		jobManager.createJob(jobInfo);
+		int id = jobManager.getId();
+		while (id == -1){
+			id = jobManager.getId();
+		}
 		res.setID(id);
+		jobManager.setId(-1);
 		return res;
 	}
 
@@ -90,10 +93,21 @@ public class RestServerController {
 
 	@PostMapping(value="/getDistrictings", consumes = "application/json")
 	public Map<String,JSONObject> getDistrictings(@RequestBody GenericRequest req) {
-		String filename = jobManager.getDistrictingFilename(req.getID());
-		Map<String,JSONObject> map = new HashMap<>();
-		map.put("random", mapManager.getDistrictingFile(filename));
-		map.put("random2", mapManager.getDistrictingFile(filename+"-2"));
-		return map;
+		return jobResultsManager.getDistrictingFiles(req.getID());
+	}
+
+	@RequestMapping(value = "/getHistory")
+	public List<JobInfoModel> getHistory() {
+		return jobResultsManager.getHistory();
+	}
+
+	@RequestMapping(value = "/loadPlans")
+	public void loadPlans() {
+		jobManager.loadPlans();
+	}
+
+	@PostMapping(value="/getBoxPlot", consumes = "application/json")
+	public List<ArrayList<Float>> getPlotData(@RequestBody GenericRequest req) {
+		return jobManager.getBoxPlot(req.getID());
 	}
 }
