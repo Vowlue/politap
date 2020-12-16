@@ -15,7 +15,8 @@ function Sidebar(props) {
         {
             menuItem: { color: 'green', key: 'Filters', icon: 'filter', content: 'Filters' },
             render: () => <FilterTab visibility={props.visibility} setVisibility={ props.setVisibility } 
-            currentMinority={props.currentMinority} setCurrentMinority={props.setCurrentMinority}/>,
+            currentMinority={props.currentMinority} setCurrentMinority={props.setCurrentMinority}
+            activeState={props.activeState}/>,
         },
         {
             menuItem: { color: 'teal', key: 'History', icon: 'history', content: 'History' },

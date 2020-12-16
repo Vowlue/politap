@@ -17,6 +17,7 @@ function FilterTab(props) {
               Default Filters
             </Header>
           </Divider>
+          {props.activeState ?
           <List selection>
             <List.Item>
             <Button
@@ -41,12 +42,15 @@ function FilterTab(props) {
             />
             </List.Item>
           </List>
+          :
+          null}
           <Divider horizontal>
             <Header as='h4'>
               <Icon name='sort' />
               Heat Map Filters
             </Header>
           </Divider>
+          {props.activeState ?
           <List selection>
             <List.Item>
               <Button
@@ -126,6 +130,8 @@ function FilterTab(props) {
               />
             </List.Item>
           </List>
+          :
+          null}
         </Form>
     )
 }

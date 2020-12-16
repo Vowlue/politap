@@ -7,7 +7,7 @@ const compactness = ['Not', 'Somewhat', 'Very', 'Extremely']
 
 function JobTab(props) {
     const jobInfo = {
-        plans: 500,
+        plans: 10,
         populationVariance: 0.05,
         compactness: 'Somewhat',
         groups: [],

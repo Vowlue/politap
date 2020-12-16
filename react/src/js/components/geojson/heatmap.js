@@ -25,7 +25,7 @@ function HeatMap(props) {
         layer.setStyle({
           fillColor: adjustColor(props.minority, 0.5-feature.properties[props.minority+" VAP"]/(feature.properties[props.minority] > 0 ? feature.properties[props.minority] : 1)),
           fillOpacity: 0.5,
-          weight: 0,
+          weight: 0.5,
         })
         layer.on({
           mouseover: () => props.showDemographics(props.minority, feature.properties.NAME10, feature.properties.COUNTY, [feature.properties[props.minority], feature.properties[props.minority+" VAP"]]),

@@ -3,7 +3,6 @@ import { Component } from 'react'
 import { render } from 'react-dom'
 import { MapContainer, MapConsumer, TileLayer, ZoomControl } from 'react-leaflet'
 import { Button, Message } from 'semantic-ui-react'
-import SockJsClient from 'react-stomp'
 
 import { stateGeoJSON } from './data/data.js'
 import { districtAKGeoJSON } from './data/districtAKGeoJSON.js'
@@ -20,15 +19,18 @@ import { Sidebar } from './js/components/ui/sidebar.js'
 import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
-import { convertEnumToString, stringifyNumber, getJavaState } from './js/helpers/stringHelper.js'
-import { deleteJob, initiateJob, getStateData, getDistrictings, cancelJob } from './js/apis/axios.js'
+import { stringifyNumber, getJavaState } from './js/helpers/stringHelper.js'
+import { deleteJob, initiateJob, getStateData, cancelJob } from './js/apis/axios.js'
+
+import { SemanticToastContainer, toast } from 'react-semantic-toasts';
+import 'react-semantic-toasts/styles/react-semantic-alert.css';
 
 class BiasMap extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      position: [38.305,-96.156],
-      zoom: 4.75,
+      position: [35.305,-85.26],
+      zoom: 6,
       stateDemographicStats: {},
       hoveredPrecinct: 'No precinct hovered',
       activeState: null,
@@ -41,7 +43,6 @@ class BiasMap extends Component {
         random2: false,
       },
       currentMinority: null,
-      jobHistory: {},
       precinct_geojsons: {},
       jobLabelContent: "No job has been started yet.",
       currentJobId: 0
@@ -53,7 +54,6 @@ class BiasMap extends Component {
     this.setVisibility = this.setVisibility.bind(this)
     this.addJobToHistory = this.addJobToHistory.bind(this)
     this.removeJobFromHistory = this.removeJobFromHistory.bind(this)
-    this.modifyJobStatus = this.modifyJobStatus.bind(this)
     this.cancelHistoryJob = this.cancelHistoryJob.bind(this)
     this.setCurrentJobId = this.setCurrentJobId.bind(this)
     this.setCurrentMinority = this.setCurrentMinority.bind(this)
@@ -85,46 +85,26 @@ class BiasMap extends Component {
   }
 
   cancelHistoryJob(id) {
-    if(id in this.state.jobHistory) {
-      cancelJob(
-        {
-          id: id
-        },
-        res => {
-          if (res) {
-            this.modifyJobStatus(id, 'Canceled')
-          }
-        },
-        err => {
-          console.log(err)
+    cancelJob(
+      {
+        id: id
+      },
+      res => {
+        if (res) {
+          setTimeout(() => {
+            toast(
+                {
+                    title: `Job #${id}`,
+                    description: <p>{`Job #${id} has been canceled.`}</p>
+                }
+            );
+        }, 1500);
         }
-      )
-    }
-  }
-
-  modifyJobStatus(id, status) {
-    if(id in this.state.jobHistory) {
-      let newJobHistory = {...this.state.jobHistory}
-      newJobHistory[id].status = status
-      if (status === 'Done') {
-        getDistrictings(
-          {
-            id: id
-          },
-          res => {
-            newJobHistory[id].jobDistricts = res
-            this.setState({
-              jobHistory: newJobHistory
-            })
-          }
-        )
+      },
+      err => {
+        console.log(err)
       }
-      else {
-        this.setState({
-          jobHistory: newJobHistory
-        })
-      }
-    }
+    )
   }
 
   addJobToHistory(jobInfo) {
@@ -141,11 +121,7 @@ class BiasMap extends Component {
       res => {
         jobInfo.id = res
         this.setState({
-          jobLabelContent: `Job #${res} has been started.`,
-          jobHistory: {
-            ...this.state.jobHistory,
-            [res]: jobInfo
-          }
+          jobLabelContent: `Job #${res} has been started.`
         })
       },
       err => {
@@ -156,10 +132,6 @@ class BiasMap extends Component {
 
   removeJobFromHistory(index) {
     deleteJob({ID: index})
-    const { [index]: value, ...withoutIndex } = this.state.jobHistory
-    this.setState({
-      jobHistory: withoutIndex
-    });
   }
 
   setVisibility(component, visible) {
@@ -243,11 +215,6 @@ class BiasMap extends Component {
   render() {
     return (
       <div id='app_container'>
-        <SockJsClient url='http://localhost:8080/webSocket/'
-          topics={ ['/jobStatus'] }
-          onMessage={ msg => { this.modifyJobStatus(msg.id, convertEnumToString(msg.jobStatus)) } }
-          ref={(client) => {this.clientRef = client}}
-        />
         <Sidebar 
           jobHistory={ this.state.jobHistory }
           addJobToHistory={ this.addJobToHistory }
@@ -269,6 +236,7 @@ class BiasMap extends Component {
             zoomControl={false}
             zoomSnap={0.10}
           >
+            <SemanticToastContainer />
             <MapConsumer>
               {(map) => {
                 this.map = map

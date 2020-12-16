@@ -32,4 +32,16 @@ const cancelJob = async (id, callback, errfunc) => {
   .catch(err => { errfunc(err) })
 }
 
-export { initiateJob, deleteJob, getStateData, getDistrictings, cancelJob }
+const getHistory = async (callback, errfunc) => {
+  axios.get(`${server}/getHistory`)
+  .then(res => { callback(res.data) })
+  .catch(err => { errfunc(err) })
+}
+
+const getBoxPlot = async (id, callback, errfunc) => {
+  axios.post(`${server}/getBoxPlot`)
+  .then(res => { callback(res.data) })
+  .catch(err => { errfunc(err) })
+}
+
+export { initiateJob, deleteJob, getStateData, getDistrictings, cancelJob, getHistory, getBoxPlot }

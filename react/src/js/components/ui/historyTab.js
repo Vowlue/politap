@@ -1,6 +1,18 @@
 import { Label, Header, Icon, Form, Divider, Message, Segment, Button, Grid, Popup, Accordion } from 'semantic-ui-react'
 import Plot from 'react-plotly.js'
 import { stringifyNumber } from '../../helpers/stringHelper.js'
+import { getHistory, getBoxPlot } from '../../apis/axios.js'
+import { useEffect, useState } from 'react'
+
+const stateAbbrev = {
+  'SC': 'South Carolina',
+  'VA': 'Virginia',
+  'AR': 'Arkansas'
+}
+
+const upperCaseString = stringList => {
+  return stringList.map(word => word[0].toUpperCase() + word.substring(1)).join(' ')
+}
 
 function HistoryTab(props) {
   const renderHistory = jobInfo => {
@@ -25,6 +37,14 @@ function HistoryTab(props) {
               </Popup.Content>
             </Popup>
             <Header textAlign='center' as='div' size='small'>Job Districts</Header>
+            <Button onClick={() => getBoxPlot(jobInfo.id,
+      res => {
+        console.log(res)
+      },
+      err => {
+        console.log(err)
+      }
+    )}>TEST BUTTON</Button>
             <Button 
               color='red'
               basic={!props.visibility.random} 
@@ -57,12 +77,12 @@ function HistoryTab(props) {
               <Label color='black' size='large'>
                 <Icon name='star'></Icon>
                 State
-                <Label.Detail content={jobInfo.state}> 
+                <Label.Detail content={stateAbbrev[jobInfo.state]}> 
                 </Label.Detail>
               </Label>
               <Label color='green' size='large'>
                 Status
-                <Label.Detail content={jobInfo.status}> 
+                <Label.Detail content={upperCaseString(jobInfo.status.toLowerCase().split('_'))}> 
                 </Label.Detail>
               </Label>
           </Header.Subheader>
@@ -82,42 +102,53 @@ function HistoryTab(props) {
               </Label>
               <Label  size='large' color='teal' basic >
               Compactness:
-                <Label.Detail content={jobInfo.compactness}>
+                <Label.Detail content={upperCaseString(jobInfo.compactness.toLowerCase().split('_'))}>
                 </Label.Detail>
               </Label>
               <Label  size='large' color='teal' basic >
               Server:
-                <Label.Detail content={jobInfo.server}>
+                <Label.Detail content={jobInfo.plans <= 15 ? 'Local' : 'Seawulf'}>
                 </Label.Detail>
               </Label>
             </Grid.Column>
             <Grid.Column stretched>
               <Label  size='large' color='teal' basic >
               Racial/Ethnic Groups:
-                <Label.Detail content={jobInfo.groups.length > 0 ? jobInfo.groups.join(", ") : "None"}>
+                <Label.Detail content={jobInfo.demographics ? upperCaseString(jobInfo.demographics.toLowerCase().split('_')) : "None"}>
                 </Label.Detail>
               </Label>
             </Grid.Column>
           </Grid.Row>
         </Grid>
-        <br />
         {
-          jobInfo.status !== "Running" ?
-          <Button color='red' basic >Cancel Job</Button>
+          jobInfo.status === "RUNNING" ?
+          <Button as='div' labelPosition='left'>
+            <Label as='div' color='red' basic> 
+              <Icon name='wait' /> Waiting for job to finish
+            </Label>
+            <Button color='red' onClick={() => props.cancelJob(jobInfo.id)}>Cancel Job</Button>
+          </Button>
           :
-          <Button color='red' onClick={() => props.cancelJob(jobInfo.id)}>Cancel Job</Button>
-        }
-        {
-          jobInfo.status === "Done" ? 
           <Accordion defaultActiveIndex={props.defaultIndex} panels={panels} />
-          :
-          jobInfo.status === "Canceled" ? null
-          :
-          <div>Loading options...</div>
         }
       </Segment>
     )
   }
+
+  const [history, setHistory] = useState([])
+  const [plotData, setPlotData] = useState([])
+
+  useEffect(() => {
+    getHistory(
+      res => {
+        setHistory(res)
+      },
+      err => {
+        console.log(err)
+      }
+    )
+  })
+  
 
   return (
       <Form>
@@ -137,8 +168,8 @@ function HistoryTab(props) {
         </Divider>
         <Segment style={{ overflow: 'auto', maxHeight: '64vh' }}>
           { 
-            Object.keys(props.jobHistory).map(key => 
-              renderHistory(props.jobHistory[key]))
+            history.map(job => 
+              renderHistory(job))
           }
         </Segment>
       </Form>
