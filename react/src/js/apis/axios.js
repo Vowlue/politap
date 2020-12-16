@@ -9,8 +9,8 @@ const initiateJob = async (jobInfo, callback, errfunc) => {
 }
 
 const deleteJob = async (id, callback, errfunc) => {
-    axios.post(`${server}/deleteJob`, id)
-    .then(res => { console.log(res.data + "has been deleted") })
+    axios.post(`${server}/deleteJob`, {ID: id})
+    .then(res => { callback(res) })
     .catch(err => { errfunc(err) })
 }
 

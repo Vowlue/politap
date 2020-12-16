@@ -20,7 +20,7 @@ import './css/index.css'
 import 'semantic-ui-css/semantic.min.css'
 
 import { stringifyNumber, getJavaState } from './js/helpers/stringHelper.js'
-import { deleteJob, initiateJob, getStateData, cancelJob } from './js/apis/axios.js'
+import { deleteJob, initiateJob, getStateData, cancelJob, getDistrictings } from './js/apis/axios.js'
 
 import { SemanticToastContainer, toast } from 'react-semantic-toasts';
 import 'react-semantic-toasts/styles/react-semantic-alert.css';
@@ -39,13 +39,16 @@ class BiasMap extends Component {
         state: true,
         district: false,
         precinct: false,
-        random: false,
+        random1: false,
         random2: false,
+        average: false,
+        extreme: false
       },
       currentMinority: null,
       precinct_geojsons: {},
       jobLabelContent: "No job has been started yet.",
-      currentJobId: 0
+      currentJobId: 0,
+      jobDistricts: {}
     }
 
     this.showDemographics = this.showDemographics.bind(this)
@@ -57,9 +60,23 @@ class BiasMap extends Component {
     this.cancelHistoryJob = this.cancelHistoryJob.bind(this)
     this.setCurrentJobId = this.setCurrentJobId.bind(this)
     this.setCurrentMinority = this.setCurrentMinority.bind(this)
+    this.setDistrictings = this.setDistrictings.bind(this)
 
     this.stateBounds = []
     this.districtGeoJsons = [...districtAKGeoJSON, ...districtSCGeoJSON, ...districtVAGeoJSON]
+  }
+
+  setDistrictings(id) {
+    getDistrictings(
+      {id: id},
+      res => this.setState({
+        jobDistricts: {
+          ...this.state.jobDistricts,
+          [id]: res
+        }
+      }),
+      err => console.log(err)
+    )
   }
 
   setCurrentMinority(minority) {
@@ -228,6 +245,7 @@ class BiasMap extends Component {
           setCurrentJobId={this.setCurrentJobId}
           currentMinority={this.state.currentMinority}
           setCurrentMinority={this.setCurrentMinority}
+          setDistrictings={this.setDistrictings}
         />
         <div id='map'>
           <MapContainer
@@ -294,14 +312,26 @@ class BiasMap extends Component {
               null
             }
             {
-              this.state.visibility.random ? 
-              <JobDistrict color="#B03060" data={this.state.jobHistory[this.state.currentJobId].jobDistricts.random}/>
+              this.state.visibility.random1 ? 
+              <JobDistrict color="#B03060" data={this.state.jobDistricts[this.state.currentJobId].random1}/>
               :
               null
             }
             {
               this.state.visibility.random2 ? 
-              <JobDistrict color="#016936" data={this.state.jobHistory[this.state.currentJobId].jobDistricts.random2}/>
+              <JobDistrict color="#016936" data={this.state.jobDistricts[this.state.currentJobId].random2}/>
+              :
+              null
+            }
+            {
+              this.state.visibility.average ? 
+              <JobDistrict color="#EE82EE" data={this.state.jobDistricts[this.state.currentJobId].average}/>
+              :
+              null
+            }
+            {
+              this.state.visibility.extreme ? 
+              <JobDistrict color="#A52A2A" data={this.state.jobDistricts[this.state.currentJobId].extreme}/>
               :
               null
             }

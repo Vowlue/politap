@@ -10,15 +10,43 @@ const stateAbbrev = {
   'AR': 'Arkansas'
 }
 
+const map = {'AR' : [.03,.17,.18,.21], 'SC': [.178,.182,.183,.229,.271,.272,.554], 'VA': [.05,.07,.10,.11,.12,.15,.16,.19,.20,.31,.54]}
+    
+
 const upperCaseString = stringList => {
   return stringList.map(word => word[0].toUpperCase() + word.substring(1)).join(' ')
 }
-
 function HistoryTab(props) {
+  const calculatePlotData = plotData => {
+    const stats = {
+      min: [],
+      max: [],
+      median: [],
+      q1: [],
+      q3: []
+    }
+    
+    for(let i = 0; i<plotData.length; i++) {
+      let current = plotData[i]
+      current.sort()
+      stats.min.push(current[0])
+      stats.max.push(current[current.length-1])
+      const mid = Math.ceil(current.length / 2)
+      stats.median.push(current.length % 2 === 0 ? (current[mid] + current[mid - 1]) / 2 : current[mid - 1])
+      stats.q1.push(current[Math.floor(current.length*0.25)-1])
+      stats.q3.push(current[Math.floor(current.length*0.75)-1])
+    }
+    return stats
+  }
+  
   const renderHistory = jobInfo => {
-
-    const callFunc = id => {
-      getBoxPlot(id, res => console.log(res), err => console.log(err))
+    const calculatePlot = (jobInfo) => {
+      getBoxPlot({id: jobInfo.id},
+      res => {
+        plotData[jobInfo.id] = calculatePlotData(res)
+        setPlotData(plotData)
+      }, 
+      err => console.log(err))
     }
     const panels = [
       {
@@ -26,29 +54,39 @@ function HistoryTab(props) {
         title: 'More Options',
         content: {
           content: (<div>
-            <Popup trigger={<Button color='teal' content='Box Plot' />}>
+            <Button onClick={() => calculatePlot(jobInfo)}>Calculate</Button>
+            {
+              jobInfo.id in plotData ? 
+              <Popup trigger={<Button color='teal' content='Box Plot' />}>
               <Popup.Content>
                 <Plot
                     data={[
                       {
-                        x: [1, 2, 3,4,5,6,7,8,9],
-                        type: 'box',
-                        marker: {color: 'red'},
+                        "type": "box",
+                        "x": Array.from(new Array(plotData[jobInfo.id].q1.length),(val,index)=>index+1),
+                        "q1": plotData[jobInfo.id].q1,
+                        "median": plotData[jobInfo.id].median,
+                        "q3": plotData[jobInfo.id].q3,
+                        "lowerfence": plotData[jobInfo.id].min,
+                        "upperfence": plotData[jobInfo.id].max,
+                        "mean": map[jobInfo.state]
                       }
                     ]}
-                    layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
+                    layout={ {} }
                   />
               </Popup.Content>
             </Popup>
+            :
+            null
+            }
             <Header textAlign='center' as='div' size='small'>Job Districts</Header>
-            <Button onClick={() => callFunc(jobInfo.id)}>
-              TEST BUTTON</Button>
             <Button 
               color='red'
-              basic={!props.visibility.random} 
+              basic={!props.visibility.random1} 
               onClick={() => {
+                props.setDistrictings(jobInfo.id)
                 props.setCurrentJobId(jobInfo.id)
-                props.setVisibility('random', !props.visibility.random)
+                setTimeout(() => props.setVisibility('random1', !props.visibility.random1), 200)
               }}
               content="Random"
             />
@@ -56,13 +94,32 @@ function HistoryTab(props) {
               color='green'
               basic={!props.visibility.random2} 
               onClick={() => {
+                props.setDistrictings(jobInfo.id)
                 props.setCurrentJobId(jobInfo.id)
-                props.setVisibility('random2', !props.visibility.random2)
+                setTimeout(() => props.setVisibility('random2', !props.visibility.random2), 200)
               }}
               content="Random"
             />
-            <Button>Average</Button>
-            <Button>Extreme</Button>
+            <Button 
+              color='purple'
+              basic={!props.visibility.average} 
+              onClick={() => {
+                props.setDistrictings(jobInfo.id)
+                props.setCurrentJobId(jobInfo.id)
+                setTimeout(() => props.setVisibility('average', !props.visibility.average), 200)
+              }}
+              content="Average"
+            />
+            <Button 
+              color='brown'
+              basic={!props.visibility.extreme} 
+              onClick={() => {
+                props.setDistrictings(jobInfo.id)
+                props.setCurrentJobId(jobInfo.id)
+                setTimeout(() => props.setVisibility('extreme', !props.visibility.extreme), 200)
+              }}
+              content="Extreme"
+            />
             </div>)}
       }
     ]
@@ -134,7 +191,7 @@ function HistoryTab(props) {
   }
 
   const [history, setHistory] = useState([])
-  const [plotData, setPlotData] = useState([])
+  const [plotData, setPlotData] = useState({})
 
   useEffect(() => {
     getHistory(
