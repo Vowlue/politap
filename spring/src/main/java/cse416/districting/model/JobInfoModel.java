@@ -38,6 +38,8 @@ public class JobInfoModel {
 
     private String status = JobStatus.NOT_STARTED.toString();
 
+    private String isLocal = "LOCAL";
+
     @Transient
     private Demographic[] demographicsList;
 
@@ -55,5 +57,6 @@ public class JobInfoModel {
             if (i != demographicsList.length-1) str += ",";
         }
         this.demographics = str;
+        if (!jobInfo.isLocal()) this.isLocal = "SEAWULF";
     }
 }

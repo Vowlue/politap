@@ -19,7 +19,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import cse416.districting.model.JobInfoModel;
+import cse416.districting.model.JobResults;
 import cse416.districting.repository.JobInfoRepository;
+import cse416.districting.repository.JobResultsRepository;
 
 
 @Getter
@@ -28,6 +30,9 @@ public class JobResultsManager {
 
     @Autowired
     JobInfoRepository jobInfoRepository;
+
+    @Autowired
+    JobResultsRepository jobResultsRepository;
     
     public List<JobInfoModel> getHistory(){
         List<JobInfoModel> ret = new ArrayList<JobInfoModel>();
@@ -55,5 +60,10 @@ public class JobResultsManager {
             }
         }
         return maps;
+    }
+
+    public List<ArrayList<Float>> getPlotData(int jobID){
+        JobResults jobResults = jobResultsRepository.findOneByJobID(jobID);
+        return jobResults.getPlot();
     }
 }

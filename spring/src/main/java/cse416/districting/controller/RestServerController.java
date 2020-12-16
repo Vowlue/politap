@@ -9,6 +9,7 @@ import cse416.districting.dto.*;
 import cse416.districting.manager.*;
 import cse416.districting.model.JobInfoModel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -103,5 +104,10 @@ public class RestServerController {
 	@RequestMapping(value = "/loadPlans")
 	public void loadPlans() {
 		jobManager.loadPlans();
+	}
+
+	@PostMapping(value="/getBoxPlot", consumes = "application/json")
+	public List<ArrayList<Float>> getPlotData(@RequestBody GenericRequest req) {
+		return jobResultsManager.getPlotData(req.getID());
 	}
 }

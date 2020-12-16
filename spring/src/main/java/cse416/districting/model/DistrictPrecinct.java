@@ -18,7 +18,10 @@ public class DistrictPrecinct {
     @EmbeddedId
     private DistrictPrecinctKey id;
 
-    public DistrictPrecinct(String precinct_id, int district_id){
-        this.id = new DistrictPrecinctKey(precinct_id, district_id);
+    private long minority = 0;
+    private long minorityvap = 0;
+
+    public DistrictPrecinct(String precinctid, int districtid){
+        this.id = new DistrictPrecinctKey(precinctid, districtid);
     }
 }

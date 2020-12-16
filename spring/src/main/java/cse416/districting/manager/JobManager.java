@@ -242,12 +242,18 @@ public class JobManager {
             Precinct precinct = precinctRepository.findOneByGeoid((String)district.get(k));
             population += precinct.getTotal();
             vap += precinct.getTotal_vap();
+            long precinctminority = 0;
+            long precinctminorityvap = 0;
             for(Demographic d : demo){
+                precinctminority += precinct.getPopulationData().get(d);
                 minority += precinct.getPopulationData().get(d);
+                precinctminorityvap += precinct.getPopulationDataVAP().get(d);
                 minorityvap += precinct.getPopulationDataVAP().get(d);
             }
             counties.add(precinct.getCounty());
             DistrictPrecinct districtPrecinct = new DistrictPrecinct(precinct.getGeoid(),districtID);
+            districtPrecinct.setMinority(precinctminority);
+            districtPrecinct.setMinorityvap(precinctminorityvap);
             arr.add(districtPrecinct);
         }
         districtObj.setCounties(counties.size());
@@ -297,10 +303,29 @@ public class JobManager {
 
     public boolean cancelJob(int ID){
         jobs.get(ID).cancel();
+        JobInfoModel jobinfoModel = jobInfoRepository.findById(ID).get();
+        jobInfoRepository.delete(jobinfoModel);
         return true;
     }
 
     public boolean deleteJob(int ID){
+        JobResults jobResult = jobResultsRepository.findOneByJobID(ID);
+        List<Integer> arr = new ArrayList<>();
+        arr.add(jobResult.getAverage());
+        arr.add(jobResult.getExtreme());
+        arr.add(jobResult.getRandom1());
+        arr.add(jobResult.getRandom2());
+        for (Integer a : arr){
+            Districting districting = districtingRepository.findById(a).get();
+            for (District d : districting.getDistricts()){
+                districtPrecinctRepository.deleteByIdDistrictid(d.getId());
+                districtRepository.delete(d);
+            }
+            districtingRepository.delete(districting);
+        }
+        jobResultsRepository.delete(jobResult);
+        JobInfoModel jobInfoModel = jobInfoRepository.findById(ID).get();
+        jobInfoRepository.delete(jobInfoModel);
         jobs.remove(ID);
         return true;
     }

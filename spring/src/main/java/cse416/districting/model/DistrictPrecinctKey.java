@@ -16,6 +16,6 @@ import lombok.Setter;
 @SuppressWarnings("serial")
 @Embeddable
 public class DistrictPrecinctKey implements Serializable{
-    private String precinct_id;
-    private int district_id;
+    private String precinctid;
+    private int districtid;
 }
