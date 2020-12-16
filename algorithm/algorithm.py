@@ -12,7 +12,7 @@ from precinct import Precinct
 from cluster import Cluster
 
 # simluate algo params/job params
-numIterations = 20
+numIterations = 50
 requestedNumDistricts = 4
 
 globalPrecinctDict = {}

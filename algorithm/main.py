@@ -16,11 +16,12 @@ if __name__ == "__main__":
 
     # get the command line args
     # error handling
-    if (len(sys.argv)) == 4:
-        # parse command line args 
-        state = sys.argv[1]
-        populationVar = float(sys.argv[2])
-        compactness = sys.argv[3]
+    if (len(sys.argv)) == 5:
+        # parse command line args
+        numPlans = int(sys.argv[1]) 
+        state = sys.argv[2]
+        populationVar = float(sys.argv[3])
+        compactness = sys.argv[4]
         
         data = {}
         data["plans"] = []
@@ -33,7 +34,7 @@ if __name__ == "__main__":
             json.dump(data, outfile)
         
     else:
-        print("Usage: python main.py state populationVar compactness")
+        print("Usage: python main.py numPlans state populationVar compactness")
 
     end_time = time.time()
 
